@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тун Тун Тун Заур — Лиги Мастер/Про + день рождения мамы</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s; }
+        body.mom-birthday {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.15"><circle cx="20" cy="20" r="6" fill="pink"/><circle cx="80" cy="30" r="8" fill="hotpink"/><circle cx="50" cy="80" r="7" fill="lightpink"/><circle cx="10" cy="70" r="5" fill="pink"/><circle cx="90" cy="85" r="6" fill="hotpink"/><circle cx="40" cy="10" r="4" fill="lightpink"/><circle cx="70" cy="55" r="9" fill="pink"/><circle cx="30" cy="50" r="5" fill="hotpink"/><circle cx="85" cy="15" r="4" fill="lightpink"/></svg>') repeat;
+            background-size: 60px;
+        }
+        .flower-decoration {
+            position: fixed;
+            pointer-events: none;
+            font-size: 32px;
+            animation: floatFlower 12s infinite linear;
+            z-index: 999;
+            text-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+        @keyframes floatFlower {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+        #app { position: relative; width: 100%; height: 100%; }
+        .tab-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: calc(100% - 70px);
+            overflow-y: auto; padding: 20px; transition: transform 0.35s ease, opacity 0.35s ease;
+            transform: translateX(100%); opacity: 0; pointer-events: none;
+            background: linear-gradient(145deg, #1e1e2f 0%, #2a2a40 100%);
+        }
+        .tab-content.active { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .bottom-nav {
+            position: absolute; bottom: 0; width: 100%; height: 70px;
+            display: flex; background: #161625; border-top: 2px solid #ffb347;
+            overflow-x: auto;
+        }
+        .nav-btn {
+            flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #aaa; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            border: none; background: none; gap: 4px; padding: 0 12px;
+        }
+        .nav-btn.active { color: #ffb347; text-shadow: 0 0 8px #ffb347; }
+        .nav-icon { font-size: 24px; }
+        button { background: #ffb347; border: none; color: #000; font-weight: bold; padding: 10px 16px; border-radius: 40px; cursor: pointer; font-size: 14px; transition: 0.1s; margin: 4px; }
+        button:active { transform: scale(0.96); }
+        .clicker-image {
+            width: 85%; max-width: 280px; background: #ffb34720; border-radius: 60px; padding: 20px;
+            text-align: center; cursor: pointer; transition: 0.1s;
+            border: 3px solid #ffb347; box-shadow: 0 0 15px #ffb347; margin: 15px auto;
+        }
+        .clicker-image img { width: 100%; border-radius: 40px; pointer-events: none; }
+        .stat { background: #2a2a45; padding: 10px; border-radius: 16px; text-align: center; margin: 5px; }
+        .unit-card { background: #2a2a45; border-radius: 16px; padding: 12px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
+        .rarity-common { border-left: 5px solid #aaa; }
+        .rarity-rare { border-left: 5px solid #4caf50; }
+        .rarity-epic { border-left: 5px solid #9c27b0; }
+        .rarity-mythic { border-left: 5px solid #ff9800; }
+        .rarity-legendary { border-left: 5px solid #f44336; }
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; z-index: 2000;
+            visibility: hidden; opacity: 0; transition: 0.2s;
+        }
+        .modal.active { visibility: visible; opacity: 1; }
+        .modal-content { background: #2a2a40; border-radius: 32px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; padding: 20px; border: 1px solid #ffb347; text-align: center; }
+        .quest-item, .shop-item, .club-item, .admin-item, .streak-item, .skin-item, .record-item, .chat-message { background: #1e1e2f; border-radius: 20px; padding: 12px; margin-bottom: 12px; }
+        .quest-progress { background: #444; border-radius: 20px; height: 12px; margin: 8px 0; }
+        .quest-progress-fill { background: #ffb347; width: 0%; height: 100%; border-radius: 20px; }
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .avatar-wrapper { display: inline-flex; flex-direction: column; align-items: center; }
+        .frame-border { display: inline-block; border-radius: 50%; padding: 4px; background: transparent; }
+        .avatar-click { cursor: pointer; background: #ffb34730; border-radius: 50%; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; overflow: hidden; }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+        .auth-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.95); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+            visibility: hidden; opacity: 0;
+        }
+        .auth-overlay.active { visibility: visible; opacity: 1; }
+        .auth-card { background: #2a2a40; border-radius: 40px; padding: 30px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #ffb347; }
+        .auth-card input { width: 100%; padding: 14px; margin: 10px 0; background: #1e1e2f; border: 1px solid #ffb347; border-radius: 60px; color: white; }
+        .error-msg { color: #ff8888; }
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #444; }
+        .admin-input { width: 100%; padding: 10px; margin: 8px 0; background: #1e1e2f; border: 1px solid #ffb347; border-radius: 30px; color: white; font-size: 14px; }
+        .frame-select { background: #2a2a45; padding: 8px; border-radius: 20px; margin-top: 10px; }
+        .club-member { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+        .friend-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #444; }
+        .account-switch { background: #2a2a45; border-radius: 20px; padding: 10px; margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .account-select { background: #1e1e2f; color: white; padding: 8px; border-radius: 30px; border: 1px solid #ffb347; }
+        .loading-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: #000000dd; backdrop-filter: blur(10px); z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+            visibility: hidden; opacity: 0; transition: 0.2s;
+        }
+        .loading-overlay.active { visibility: visible; opacity: 1; }
+        .loading-card { background: #2a2a40; padding: 30px; border-radius: 48px; width: 80%; max-width: 320px; text-align: center; border: 2px solid #ffb347; }
+        .loader-bar { width: 100%; height: 20px; background: #1e1e2f; border-radius: 40px; margin-top: 20px; overflow: hidden; }
+        .loader-fill { width: 0%; height: 100%; background: #ffb347; transition: width 0.05s linear; }
+        .battle-arena { text-align: center; }
+        .health-sphere { background: #ffb34720; border-radius: 50%; width: 120px; height: 120px; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 32px; border: 4px solid #ffb347; transition: 0.05s linear; cursor: pointer; }
+        .health-sphere:active { transform: scale(0.95); background: #ffb34760; }
+        .hit-counter { font-weight: bold; font-size: 24px; }
+        .notification { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #ffb347; color: #000; padding: 10px 20px; border-radius: 40px; z-index: 6000; animation: fadeOut 3s forwards; pointer-events: none; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+        .flash { animation: flash 0.1s linear; }
+        @keyframes flash { 0% { background: rgba(255,180,71,0.8); } 100% { background: transparent; } }
+        .league-badge { font-size: 18px; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; background: #2a2a45; padding: 5px 12px; border-radius: 30px; margin: 5px; }
+        .chat-container { display: flex; flex-direction: column; height: 100%; }
+        .chat-messages { flex: 1; overflow-y: auto; max-height: 60vh; margin-bottom: 10px; }
+        .chat-input-area { display: flex; gap: 10px; margin-top: 10px; }
+        .chat-input-area input { flex: 1; background: #1e1e2f; border: 1px solid #ffb347; border-radius: 40px; padding: 12px; color: white; font-size: 14px; }
+        .chat-input-area button { white-space: nowrap; }
+        .timer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 7000;
+            visibility: hidden; opacity: 0;
+            transition: 0.2s;
+            font-size: 80px;
+            font-weight: bold;
+            color: #ffb347;
+        }
+        .timer-overlay.active { visibility: visible; opacity: 1; }
+        .club-tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .club-tab-btn { background: #2a2a45; color: #fff; border: 1px solid #ffb347; }
+        .club-tab-btn.active { background: #ffb347; color: #000; }
+        .skin-preview { width: 60px; height: 60px; background: #2a2a45; border-radius: 16px; margin: 5px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #ffb347; }
+        .skin-preview.selected { border-color: gold; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+    // ==================== КОНСТАНТЫ ====================
+    let ADMINS = { "DushkaYaroslav": "16052014" };
+    let adminPermissions = {};
+    let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
+
+    // Расширенные лиги: добавлены Мастер (жёлтая) и Про (зелёная) с уникальными значками
+    const LEAGUES = [
+        { name: "Бронзовая", star: 1, frame: "Бронзовая рамка", icon: "🥉" },
+        { name: "Бронзовая", star: 2, frame: "Бронзовая рамка", icon: "🥉" },
+        { name: "Бронзовая", star: 3, frame: "Бронзовая рамка", icon: "🥉" },
+        { name: "Серебряная", star: 1, frame: "Серебряная рамка", icon: "🥈" },
+        { name: "Серебряная", star: 2, frame: "Серебряная рамка", icon: "🥈" },
+        { name: "Серебряная", star: 3, frame: "Серебряная рамка", icon: "🥈" },
+        { name: "Золотая", star: 1, frame: "Золотая рамка", icon: "🥇" },
+        { name: "Золотая", star: 2, frame: "Золотая рамка", icon: "🥇" },
+        { name: "Золотая", star: 3, frame: "Золотая рамка", icon: "🥇" },
+        { name: "Платиновая", star: 1, frame: "Платиновая рамка", icon: "💎" },
+        { name: "Платиновая", star: 2, frame: "Платиновая рамка", icon: "💎" },
+        { name: "Платиновая", star: 3, frame: "Платиновая рамка", icon: "💎" },
+        { name: "Алмазная", star: 1, frame: "Алмазная рамка", icon: "💠" },
+        { name: "Алмазная", star: 2, frame: "Алмазная рамка", icon: "💠" },
+        { name: "Алмазная", star: 3, frame: "Алмазная рамка", icon: "💠" },
+        { name: "Мастер", star: 1, frame: "Мастерская рамка", icon: "⭐" },
+        { name: "Мастер", star: 2, frame: "Мастерская рамка", icon: "⭐" },
+        { name: "Мастер", star: 3, frame: "Мастерская рамка", icon: "⭐" },
+        { name: "Про", star: 1, frame: "Про-рамка", icon: "🌟" },
+        { name: "Про", star: 2, frame: "Про-рамка", icon: "🌟" },
+        { name: "Про", star: 3, frame: "Про-рамка", icon: "🌟" }
+    ];
+    const ALL_FRAMES = ["Стандартная", "Бронзовая рамка", "Серебряная рамка", "Золотая рамка", "Алмазная рамка", "🔥Пламенная рамка🔥", "❄️Ледяная рамка❄️", "🌙Лунная рамка🌙", "⚡Грозовая рамка⚡", "Платиновая рамка", "Мастерская рамка", "Про-рамка", "🌺Мамин цветок🌺"];
+    const SKINS = [
+        { id: "frame_fire", name: "Пламенная рамка", type: "frame", priceDiamonds: 200 },
+        { id: "frame_ice", name: "Ледяная рамка", type: "frame", priceDiamonds: 200 },
+        { id: "frame_moon", name: "Лунная рамка", type: "frame", priceDiamonds: 250 },
+        { id: "frame_thunder", name: "Грозовая рамка", type: "frame", priceDiamonds: 300 },
+        { id: "click_fire", name: "Огненный клик", type: "clickEffect", priceDiamonds: 150, effect: "🔥" },
+        { id: "click_star", name: "Звёздный клик", type: "clickEffect", priceDiamonds: 150, effect: "⭐" },
+        { id: "avatar_dragon", name: "Аватар Дракона", type: "avatar", priceDiamonds: 300, avatarUrl: "🐉" }
+    ];
+    
+    let gameState = null, currentUsername = null, saveInterval = null;
+    let deviceToken = localStorage.getItem('device_token') || ('dev_'+Math.random().toString(36).substr(2,16));
+    localStorage.setItem('device_token', deviceToken);
+    let sessionStartTime = Date.now();
+    let battleActive = false;
+    let battleStartTime = 0;
+    let chatMessages = [];
+    let adminPanelCreated = false; 
+    let momEventActive = false;
+    let momQuestCompleted = false;
+
+    // ========== СОБЫТИЕ ДЕНЬ РОЖДЕНИЯ МАМЫ (9 июня) ==========
+    function isMomBirthday() {
+        const today = new Date();
+        return today.getMonth() === 5 && today.getDate() === 9;
+    }
+
+    // Проверка, получал ли игрок награду за маму в этом году (навсегда для аккаунта)
+    function hasMomRewardClaimed() {
+        if(!currentUsername) return false;
+        let claimed = localStorage.getItem(`mom_reward_${currentUsername}`);
+        return claimed === 'true';
+    }
+    function setMomRewardClaimed() {
+        if(!currentUsername) return;
+        localStorage.setItem(`mom_reward_${currentUsername}`, 'true');
+    }
+
+    function applyMomBonus() {
+        if(!gameState) return;
+        if(momEventActive && !momQuestCompleted) {
+            if(gameState._originalClickIncome === undefined) {
+                gameState._originalClickIncome = gameState.clickIncome;
+            }
+            gameState.clickIncome = gameState._originalClickIncome * 2;
+        } else {
+            if(gameState._originalClickIncome !== undefined) {
+                gameState.clickIncome = gameState._originalClickIncome;
+            }
+        }
+        persistGame();
+    }
+
+    function showMomCard() {
+        if(hasMomRewardClaimed()) {
+            showMessage("🌺 Вы уже получили подарок за маму в этом году! 🌺");
+            return;
+        }
+        let modal = document.getElementById('momCardModal');
+        if(!modal) {
+            let div = document.createElement('div');
+            div.id = 'momCardModal';
+            div.className = 'modal';
+            div.innerHTML = `
+                <div class="modal-content" style="text-align:center;">
+                    <h2>🌺 С ДНЁМ РОЖДЕНИЯ, МАМА! 🌺</h2>
+                    <p style="font-size:18px; margin:15px 0;">Дорогая мамочка!<br>Спасибо за твою любовь и заботу.<br>Ты самый дорогой человек в мире!<br>Желаю тебе здоровья, счастья и цветов!</p>
+                    <div style="font-size:40px;">🎂🌹🎉🌸</div>
+                    <button id="claimMomRewardBtn">Получить подарок 🌸</button>
+                    <button id="closeMomCardBtn">Закрыть</button>
+                </div>
+            `;
+            document.body.appendChild(div);
+            modal = div;
+            document.getElementById('claimMomRewardBtn').onclick = () => {
+                if(!hasMomRewardClaimed()) {
+                    gameState.money += 5000;
+                    gameState.diamonds += 50;
+                    gameState.power += 100;
+                    addFrame("🌺Мамин цветок🌺");
+                    showMessage("🎁 Вы получили: 5000💰, 50💎, +100⚡ и рамку '🌺Мамин цветок🌺'!");
+                    let momQuest = gameState.quests.tasks.find(t => t.type === 'mom_birthday');
+                    if(momQuest && !momQuest.claimed) {
+                        momQuest.progress = 1;
+                        momQuest.claimed = true;
+                        persistGame();
+                    }
+                    momQuestCompleted = true;
+                    setMomRewardClaimed();
+                    updateMomBonus(); 
+                    updateUI();
+                } else {
+                    showMessage("Вы уже получали подарок в этом году! 🌸");
+                }
+                modal.classList.remove('active');
+            };
+            document.getElementById('closeMomCardBtn').onclick = () => modal.classList.remove('active');
+        }
+        modal.classList.add('active');
+    }
+
+    function activateMomEvent() {
+        if(!isMomBirthday()) return;
+        momEventActive = true;
+        document.body.classList.add('mom-birthday');
+        setInterval(() => {
+            if(momEventActive && !momQuestCompleted) {
+                let flower = document.createElement('div');
+                flower.className = 'flower-decoration';
+                flower.innerHTML = ['🌸','🌼','🌻','🌺','🌸','🌷'][Math.floor(Math.random()*6)];
+                flower.style.left = Math.random() * 100 + '%';
+                flower.style.fontSize = (20 + Math.random() * 30) + 'px';
+                flower.style.animationDuration = (5 + Math.random() * 10) + 's';
+                document.body.appendChild(flower);
+                setTimeout(() => flower.remove(), 15000);
+            }
+        }, 3000);
+        if(!gameState.quests.tasks.find(t => t.type === 'mom_birthday')) {
+            gameState.quests.tasks.push({
+                type: 'mom_birthday',
+                need: 1,
+                progress: 0,
+                claimed: false,
+                rewardMoney: 5000,
+                rewardDiamonds: 50,
+                rewardPower: 100,
+                rewardFrame: "🌺Мамин цветок🌺",
+                description: "Поздравить маму с днём рождения (открыть открытку)"
+            });
+            persistGame();
+        }
+        if(!hasMomRewardClaimed()) {
+            setTimeout(() => showMomCard(), 1000);
+        }
+        updateMomBonus();
+    }
+
+    // ========== ЛИГИ С ЗНАЧКАМИ ==========
+    function updateLeague() {
+        let wins = gameState.wins;
+        let leagueIndex = Math.min(Math.floor(wins / 10), LEAGUES.length - 1);
+        if(leagueIndex < 0) leagueIndex = 0;
+        let league = LEAGUES[leagueIndex];
+        gameState.leagueName = league.name;
+        gameState.leagueStar = league.star;
+        gameState.leagueIcon = league.icon;
+        if(!gameState.ownedFrames.includes(league.frame)) { addFrame(league.frame); }
+        let leagueDiv = document.getElementById('leagueDisplay');
+        if(leagueDiv) { 
+            let stars = '⭐'.repeat(league.star) + '☆'.repeat(3 - league.star);
+            leagueDiv.innerHTML = `${league.icon} Лига: ${league.name} ${stars}`;
+        }
+    }
+    function addWinForLeague() { updateLeague(); }
+
+    // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (сокращённо, но полноценно) ==========
+    function loadChat() { let saved = localStorage.getItem('tuntun_chat'); if(saved) chatMessages = JSON.parse(saved); else chatMessages = []; }
+    function saveChat() { if(chatMessages.length > 200) chatMessages = chatMessages.slice(-200); localStorage.setItem('tuntun_chat', JSON.stringify(chatMessages)); }
+    function sendChatMessage(text) { if(!currentUsername) return; if(!text.trim()) return; let msg = { username: currentUsername, text: text.trim(), time: Date.now() }; chatMessages.push(msg); saveChat(); renderChat(); }
+    function renderChat() { let container = document.getElementById('chatMessagesList'); if(!container) return; container.innerHTML = chatMessages.slice().reverse().map(m => `<div class="chat-message"><b>${escapeHtml(m.username)}:</b> ${escapeHtml(m.text)}</div>`).join(''); container.scrollTop = container.scrollHeight; }
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
+
+    function loadAdmins() { let saved = localStorage.getItem('tuntun_admins'); if(saved) ADMINS = JSON.parse(saved); else localStorage.setItem('tuntun_admins', JSON.stringify(ADMINS)); }
+    function saveAdmins() { localStorage.setItem('tuntun_admins', JSON.stringify(ADMINS)); }
+    function addAdmin(username, password) { if(ADMINS[username]) return false; ADMINS[username] = password; saveAdmins(); return true; }
+    function removeAdmin(username) { if(username === "DushkaYaroslav") return false; delete ADMINS[username]; saveAdmins(); return true; }
+    function isAdmin(username) { return ADMINS.hasOwnProperty(username); }
+    loadAdmins();
+
+    function savePromos() { localStorage.setItem('tuntun_promos', JSON.stringify(promoList)); }
+    function addPromo(code, reward) { if(promoList[code]) return false; promoList[code] = reward; savePromos(); return true; }
+    function removePromo(code) { delete promoList[code]; savePromos(); }
+    function applyPromoCode(code) {
+        code = code.trim();
+        if(gameState.usedPromoCodes.includes(code)) return "Уже использован";
+        let reward = promoList[code];
+        if(!reward) return "Неверный код";
+        if(reward.money) gameState.money += reward.money;
+        if(reward.diamonds) gameState.diamonds += reward.diamonds;
+        if(reward.power) gameState.power += reward.power;
+        if(reward.frame) addFrame(reward.frame);
+        gameState.usedPromoCodes.push(code);
+        persistGame();
+        return `+${reward.money||0}💰 +${reward.diamonds||0}💎 +${reward.power||0}⚡ ${reward.frame?' +рамка':''}`;
+    }
+
+    function getUsersDB() { return JSON.parse(localStorage.getItem('tuntun_users')||'{}'); }
+    function saveUsersDB(users) { localStorage.setItem('tuntun_users', JSON.stringify(users)); }
+    function saveGameToStorage(username, state) { localStorage.setItem(`tuntun_game_${username}`, JSON.stringify(state)); }
+    function loadGameFromStorage(username) { return JSON.parse(localStorage.getItem(`tuntun_game_${username}`)||'null'); }
+    function addTrustedDevice(username, token) { let u=getUsersDB(); if(u[username]){ if(!u[username].trustedDevices) u[username].trustedDevices=[]; if(!u[username].trustedDevices.includes(token)) u[username].trustedDevices.push(token); saveUsersDB(u); } }
+    function isDeviceTrusted(username, token) { let u=getUsersDB(); return u[username]?.trustedDevices?.includes(token)||false; }
+    function isBanned(username) { let u=getUsersDB(); return u[username]?.banned === true; }
+    function setBan(username, banned) { let u=getUsersDB(); if(u[username]) { u[username].banned = banned; saveUsersDB(u); } }
+    function getSavedAccounts() { return JSON.parse(localStorage.getItem('tuntun_saved_accounts')||'[]'); }
+    function saveAccountsList(accounts) { localStorage.setItem('tuntun_saved_accounts', JSON.stringify(accounts)); }
+    function addSavedAccount(username) { let list = getSavedAccounts(); if(!list.includes(username)) { list.push(username); saveAccountsList(list); } localStorage.setItem('tuntun_last_account', username); }
+    function getLastAccount() { return localStorage.getItem('tuntun_last_account') || null; }
+    function showMessage(msg) { let d = document.createElement('div'); d.className = 'notification'; d.innerText = msg; document.body.appendChild(d); setTimeout(()=>d.remove(), 3000); }
+    function flashElement(el) { if(!el) return; el.classList.add('flash'); setTimeout(()=>el.classList.remove('flash'), 100); }
+
+    function createEmptyGameState() {
+        return {
+            money: 100, diamonds: 10, power: 1, clickIncome: 1, incomePerMinute: 0, units: [],
+            arenaLevel: 1, friends: [], moneyEarnedToday: 0, lastDailyReset: Date.now(),
+            playerId: 'id-'+Math.random().toString(36).substr(2,9), playerName: '', totalClicks: 0, wins:0, losses:0,
+            dailyClickLimit: 100000,
+            upgrades: { clickLevel: 1, healthBuffEnd: 0, powerBuffEnd: 0, limitMult: 1 },
+            club: null, totalPlayTime: 0, lastWeeklyTax: Date.now() - 7*24*3600000, usedPromoCodes: [],
+            dailyStreak: 0, lastStreakClaim: 0, ownedFrames: ["Стандартная"], selectedFrame: "Стандартная", avatarBase64: null,
+            ownedSkins: ["Стандартная"], selectedClickEffect: null, selectedAvatar: null,
+            lastGiftSend: {},
+            bestBattleTime: null,
+            leagueName: "Бронзовая", leagueStar: 1, leagueIcon: "🥉",
+            clickerSkin: "default", customSkin: null,
+            _originalClickIncome: undefined,
+            quests: { lastDateStr: new Date().toDateString(), tasks: [
+                { type: 'clicks', need: 1000, progress: 0, claimed: false, rewardMoney: 50000, rewardDiamonds:0 },
+                { type: 'battles', need: 10, progress: 0, claimed: false, rewardMoney: 0, rewardDiamonds:50 },
+                { type: 'clicks', need: 10000, progress: 0, claimed: false, rewardMoney: 0, rewardDiamonds:67 },
+                { type: 'battles', need: 100, progress: 0, claimed: false, rewardMoney: 1000000, rewardDiamonds:0 },
+                { type: 'clicks', need: 100000, progress: 0, claimed: false, rewardMoney: 0, rewardDiamonds:100 },
+                { type: 'subscribe', need: 1, progress: 0, claimed: false, rewardMoney: 500000, rewardDiamonds:0, link: 'https://max.ru/join/nkpz-r_ULaJ9ji-6tws0cGvmhwTfywDsOtRGcQ_NBo0' }
+            ] }
+        };
+    }
+
+    function addFrame(frameName) { if(!gameState.ownedFrames.includes(frameName)) { gameState.ownedFrames.push(frameName); updateFrameSelect(); persistGame(); showMessage(`Рамка: ${frameName}`); } }
+    function updateFrameSelect() { let select = document.getElementById('frameSelect'); if(!select) return; select.innerHTML = ''; gameState.ownedFrames.forEach(f => { let opt = document.createElement('option'); opt.value = f; opt.textContent = f; if(f === gameState.selectedFrame) opt.selected = true; select.appendChild(opt); }); select.onchange = () => { gameState.selectedFrame = select.value; persistGame(); updateUI(); }; document.getElementById('frameDisplay').innerHTML = `Рамка: ${gameState.selectedFrame}`; updateAvatarFrame(); }
+    function updateAvatarFrame() { let wrap = document.getElementById('avatarFrameWrapper'); if(!wrap) return; let f = gameState.selectedFrame; if(f.includes("Золотая")) wrap.style.background = "linear-gradient(135deg, #FFD700, #B8860B)"; else if(f.includes("Алмазная")) wrap.style.background = "linear-gradient(135deg, #E0FFFF, #00CED1)"; else if(f.includes("Платиновая")) wrap.style.background = "linear-gradient(135deg, #E5E4E2, #B0C4DE)"; else if(f.includes("Пламенная")) wrap.style.background = "linear-gradient(135deg, #FF4500, #FF0000)"; else if(f.includes("Ледяная")) wrap.style.background = "linear-gradient(135deg, #00BFFF, #1E90FF)"; else if(f.includes("Лунная")) wrap.style.background = "linear-gradient(135deg, #FFDAB9, #FFB6C1)"; else if(f.includes("Грозовая")) wrap.style.background = "linear-gradient(135deg, #9400D3, #4B0082)"; else if(f.includes("Бронзовая")) wrap.style.background = "linear-gradient(135deg, #CD7F32, #8B4513)"; else if(f.includes("Серебряная")) wrap.style.background = "linear-gradient(135deg, #C0C0C0, #A9A9A9)"; else if(f.includes("Мастерская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00)"; else if(f.includes("Про-рамка")) wrap.style.background = "linear-gradient(135deg, #7CFC00, #228B22)"; else if(f.includes("Мамин цветок")) wrap.style.background = "linear-gradient(135deg, #FF69B4, #FF1493)"; else wrap.style.background = "transparent"; }
+    function setupAvatarUpload() { let input = document.getElementById('avatarInput'); let preview = document.getElementById('avatarPreview'); if(!input || !preview) return; document.getElementById('uploadAvatarBtn').onclick = () => input.click(); input.onchange = (e) => { let file = e.target.files[0]; if(!file) return; let reader = new FileReader(); reader.onload = (ev) => { gameState.avatarBase64 = ev.target.result; persistGame(); updateUI(); updateLeaderboardAndFriends(); }; reader.readAsDataURL(file); }; }
+    function getAvatarHtml(avatarBase64) { if(avatarBase64) return `<img src="${avatarBase64}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; margin-right:8px;">`; return `<span style="font-size:24px; margin-right:8px;">${gameState.selectedAvatar || '👤'}</span>`; }
+    function updateLeaderboardAndFriends() { let users = getUsersDB(); let list = []; for(let un in users) { if(ADMINS[un] || isBanned(un)) continue; let st = loadGameFromStorage(un); if(st) list.push({ name: un, power: st.power || 0, wins: st.wins || 0, avatar: st.avatarBase64 }); } list.sort((a,b)=>b.power - a.power); let container = document.getElementById('leaderboardList'); if(container) container.innerHTML = list.map((p,i)=>`<div class="leaderboard-item"><div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span></div><span>⚡${Math.floor(p.power)}</span><span>🏆${p.wins}</span></div>`).join(''); let friendsDiv = document.getElementById('friendsList'); if(friendsDiv && gameState.friends) { friendsDiv.innerHTML = gameState.friends.map(f => `<div class="friend-item">${getAvatarHtml(loadGameFromStorage(f)?.avatarBase64)}<span>${f}</span><button class="sendGiftBtn" data-friend="${f}">🎁 Подарок</button></div>`).join(''); document.querySelectorAll('.sendGiftBtn').forEach(btn=>btn.addEventListener('click',()=>sendGift(btn.dataset.friend))); } renderClubUI(); }
+    function sendGift(friendName) { let last = gameState.lastGiftSend[friendName]||0; if(Date.now()-last<24*3600000) { showMessage("Подарок раз в 24 часа"); return; } let st = loadGameFromStorage(friendName); if(st) { st.money+=5000; st.diamonds+=5; saveGameToStorage(friendName,st); gameState.lastGiftSend[friendName]=Date.now(); persistGame(); showMessage(`Подарок ${friendName}: 5000💰 +5💎`); updateUI(); } else showMessage("Друг не найден"); }
+    function getClubsDB(){return JSON.parse(localStorage.getItem('tuntun_clubs')||'{}');}
+    function saveClubsDB(clubs){localStorage.setItem('tuntun_clubs',JSON.stringify(clubs));}
+    function createClub(clubName,leader){ let clubs=getClubsDB(); if(clubs[clubName]) return false; clubs[clubName]={name:clubName,leader:leader,members:[leader],wins:0,createdAt:Date.now()}; saveClubsDB(clubs); return true; }
+    function joinClub(clubName,username){ let clubs=getClubsDB(); if(!clubs[clubName]||clubs[clubName].members.includes(username)) return false; clubs[clubName].members.push(username); saveClubsDB(clubs); return true; }
+    function addClubWin(clubName){ let clubs=getClubsDB(); if(clubs[clubName]){ clubs[clubName].wins++; saveClubsDB(clubs); } }
+    function renderClubUI() { let infoDiv = document.getElementById('clubInfo'); let actionsDiv = document.getElementById('clubActions'); let leaderDiv = document.getElementById('clubLeaderboard'); if(!infoDiv) return; if(!gameState.club) { infoDiv.innerHTML = `<p>Вы не в клубе.</p><input id="newClubName" class="admin-input" placeholder="Название клуба (макс 20)" maxlength="20"><button id="createClubBtn">Создать (1м монет)</button><br><input id="joinClubName" class="admin-input" placeholder="Название для вступления"><button id="joinClubBtn">Вступить</button>`; document.getElementById('createClubBtn')?.addEventListener('click',()=>{ let name = document.getElementById('newClubName').value.trim(); if(name && gameState.money >= 1000000 && createClub(name, currentUsername)) { gameState.money -= 1000000; gameState.club = { name: name, role: 'leader' }; persistGame(); updateUI(); renderClubUI(); showMessage(`Клуб "${name}" создан!`); } else showMessage("Ошибка"); }); document.getElementById('joinClubBtn')?.addEventListener('click',()=>{ let name = document.getElementById('joinClubName').value.trim(); if(name && joinClub(name, currentUsername)) { gameState.club = { name: name, role: 'member' }; persistGame(); updateUI(); renderClubUI(); showMessage(`Вы вступили в ${name}`); } else showMessage("Ошибка"); }); } else { let clubs = getClubsDB(); let clubData = clubs[gameState.club.name]; let membersHtml = ''; if(clubData && clubData.members) { let membersWithWins = clubData.members.map(m => { let st = loadGameFromStorage(m); return { name: m, wins: st ? st.wins : 0 }; }).sort((a,b)=>b.wins - a.wins); membersHtml = membersWithWins.map(m => `<div class="club-member">${getAvatarHtml(loadGameFromStorage(m.name)?.avatarBase64)}<span>${m.name}${m.name === clubData.leader ? ' (лидер)' : ''}</span><span style="margin-left:auto;">🏆 ${m.wins}</span></div>`).join(''); } infoDiv.innerHTML = `<h3>🏠 Клуб: ${gameState.club.name}</h3><p>🏆 Побед клуба: ${clubData?.wins||0} 🏆</p>`; actionsDiv.innerHTML = `<div class="club-tabs"><button class="club-tab-btn active" data-tab="members">Состав</button><button class="club-tab-btn" data-tab="top">Топ побед</button><button class="club-tab-btn" data-tab="global">Топ клубов</button></div><div id="clubTabContent">${membersHtml}</div>`; if(gameState.club.role === 'leader') { actionsDiv.innerHTML += `<button id="inviteFriendBtn">Пригласить друга (ссылка)</button><div id="inviteLink"></div>`; document.getElementById('inviteFriendBtn')?.addEventListener('click',()=>{ let link = `${window.location.origin}${window.location.pathname}?invite=${gameState.club.name}`; document.getElementById('inviteLink').innerHTML = `<input value="${link}" readonly><button id="copyInvite">Копировать</button>`; document.getElementById('copyInvite')?.addEventListener('click',()=>{ navigator.clipboard.writeText(link); showMessage("Ссылка скопирована"); }); }); } document.querySelectorAll('.club-tab-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.club-tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); let tab = btn.dataset.tab; let contentDiv = document.getElementById('clubTabContent'); if(tab === 'members') { let members = clubData.members.map(m => { let st = loadGameFromStorage(m); return `<div class="club-member">${getAvatarHtml(st?.avatarBase64)}<span>${m}${m === clubData.leader ? ' (лидер)' : ''}</span><span style="margin-left:auto;">🏆 ${st?st.wins:0}</span></div>`; }).join(''); contentDiv.innerHTML = members; } else if(tab === 'top') { let members = clubData.members.map(m => { let st = loadGameFromStorage(m); return { name: m, wins: st ? st.wins : 0 }; }).sort((a,b)=>b.wins - a.wins); let html = members.map(m => `<div class="club-member"><span>${m.name}</span><span style="margin-left:auto;">🏆 ${m.wins}</span></div>`).join(''); contentDiv.innerHTML = html; } else if(tab === 'global') { let topClubs = Object.values(getClubsDB()).sort((a,b)=>b.wins - a.wins); let html = topClubs.map(c => `<div class="leaderboard-item"><span>${c.name}</span><span>🏆 ${c.wins}</span></div>`).join(''); contentDiv.innerHTML = html; } }); }); } let leaderDivElem = document.getElementById('clubLeaderboard'); if(leaderDivElem) { let topClubs = Object.values(getClubsDB()).sort((a,b)=>b.wins - a.wins); leaderDivElem.innerHTML = `<h4>🏅 Рейтинг клубов</h4>` + topClubs.map(c=>`<div class="leaderboard-item"><span>${c.name}</span><span>🏆${c.wins}</span></div>`).join(''); } }
+    const allUnits = []; const unitsData = [ { id:'c1', rarity:'common', name:'Зубастик', baseCost:200, baseIncome:5 }, { id:'c2', rarity:'common', name:'Рогастик', baseCost:400, baseIncome:10 }, { id:'c3', rarity:'common', name:'Прыгун', baseCost:800, baseIncome:20 }, { id:'c4', rarity:'common', name:'Крикун', baseCost:1600, baseIncome:40 }, { id:'c5', rarity:'common', name:'Шустрик', baseCost:3200, baseIncome:80 }, { id:'r1', rarity:'rare', name:'Клыкач', baseCost:6400, baseIncome:160 }, { id:'r2', rarity:'rare', name:'Броненосец', baseCost:12800, baseIncome:320 }, { id:'r3', rarity:'rare', name:'Хвостодёр', baseCost:25600, baseIncome:640 }, { id:'r4', rarity:'rare', name:'Глазастик', baseCost:51200, baseIncome:1280 }, { id:'r5', rarity:'rare', name:'Чешуйчатый', baseCost:102400, baseIncome:2560 }, { id:'e1', rarity:'epic', name:'Штормовой Завр', baseCost:204800, baseIncome:5120 }, { id:'e2', rarity:'epic', name:'Ледяной Шип', baseCost:409600, baseIncome:10240 }, { id:'e3', rarity:'epic', name:'Огнекрыл', baseCost:819200, baseIncome:20480 }, { id:'e4', rarity:'epic', name:'Теневой Коготь', baseCost:1638400, baseIncome:40960 }, { id:'e5', rarity:'epic', name:'Громовержец', baseCost:3276800, baseIncome:81920 }, { id:'m1', rarity:'mythic', name:'Дух Леса', baseCost:6553600, baseIncome:163840 }, { id:'m2', rarity:'mythic', name:'Владыка Воды', baseCost:13107200, baseIncome:327680 }, { id:'m3', rarity:'mythic', name:'Каменный Страж', baseCost:26214400, baseIncome:655360 }, { id:'m4', rarity:'mythic', name:'Песчаный Фантом', baseCost:52428800, baseIncome:1310720 }, { id:'m5', rarity:'mythic', name:'Звёздный Змей', baseCost:104857600, baseIncome:2621440 }, { id:'l1', rarity:'legendary', name:'Тун-Завр Бог', baseCost:209715200, baseIncome:5242880 }, { id:'l2', rarity:'legendary', name:'Архонт Времени', baseCost:419430400, baseIncome:10485760 }, { id:'l3', rarity:'legendary', name:'Космический Ужас', baseCost:838860800, baseIncome:20971520 }, { id:'l4', rarity:'legendary', name:'Повелитель Душ', baseCost:1677721600, baseIncome:41943040 }, { id:'l5', rarity:'legendary', name:'Вечный Заур', baseCost:3355443200, baseIncome:83886080 } ];
+    unitsData.forEach(u=>allUnits.push(u));
+    function getUnitCost(unit,lvl){ if(lvl>=6) return Infinity; return unit.baseCost * Math.pow(2,lvl); }
+    function buyUnit(unit){ let owned=gameState.units.find(u=>u.id===unit.id); let level=owned?owned.level:0; if(level>=6){alert("Макс"); return;} let cost=getUnitCost(unit,level); if(gameState.money<cost) return; gameState.money-=cost; if(!owned) gameState.units.push({id:unit.id,rarity:unit.rarity,level:1,income:unit.baseIncome*2}); else {owned.level++; owned.income=unit.baseIncome*Math.pow(2,owned.level);} recalcPowerAndIncome(); updateUI(); persistGame();}
+    const arenaSkins = [{level:1,name:'Тун Тун Тун Заур',emoji:'🐣'},{level:2,name:'ЗАУР-ВОИН',emoji:'🦎'},{level:3,name:'ЗАУР-РЫЦАРЬ',emoji:'🦖'},{level:4,name:'ЗАУР-ЛЕГЕНДА',emoji:'🐉'},{level:5,name:'ЗАУР-БОГ',emoji:'🐲'},{level:6,name:'ВСЕМОГУЩИЙ',emoji:'👾'}];
+    let clickerSkins = [
+        { id: "default", name: "Стандартный", content: '<div style="font-size:48px;">🐊🔥</div><div style="font-size:22px;">ТУН ТУН САХУР</div>' },
+        { id: "fire", name: "Огненный", content: '<div style="font-size:48px;">🔥🔥🔥</div><div style="font-size:22px;">ОГНЕННЫЙ ЗАУР</div>' },
+        { id: "ice", name: "Ледяной", content: '<div style="font-size:48px;">❄️❄️❄️</div><div style="font-size:22px;">ЛЕДЯНОЙ ЗАУР</div>' },
+        { id: "skull", name: "Скелет", content: '<div style="font-size:48px;">💀💀💀</div><div style="font-size:22px;">ЗАУР-МЕРТВЕЦ</div>' }
+    ];
+    function applyClickerSkin(skinId) { let skin = clickerSkins.find(s => s.id === skinId); if(!skin) return; gameState.clickerSkin = skinId; persistGame(); recalcPowerAndIncome(); showMessage(`Скин "${skin.name}" установлен!`); }
+    function uploadCustomSkin(base64) { let id = "custom_"+Date.now(); clickerSkins.push({ id: id, name: "Пользовательский", content: `<img src="${base64}" style="width:100%; border-radius:40px;">`, custom: true }); gameState.clickerSkin = id; gameState.customSkin = base64; persistGame(); recalcPowerAndIncome(); showMessage("Свой скин установлен!"); }
+    function openSkinShop() { let modal = document.getElementById('skinShopModal'); if(!modal) return; let container = document.getElementById('skinShopList'); container.innerHTML = SKINS.map(s=>`<div><b>${s.name}</b> - ${s.priceDiamonds}💎<button class="buySkinBtn" data-id="${s.id}">Купить</button></div>`).join(''); let clickerSkinDiv = document.createElement('div'); clickerSkinDiv.innerHTML = '<h3>Скины кликера:</h3><div id="clickerSkinGrid" style="display:flex; flex-wrap:wrap;"></div><div><input type="file" id="customSkinUpload" accept="image/*"><button id="uploadCustomSkinBtn">Загрузить свою картинку</button></div>'; container.appendChild(clickerSkinDiv); let grid = document.getElementById('clickerSkinGrid'); clickerSkins.forEach(skin => { let btn = document.createElement('div'); btn.className = 'skin-preview'; if(gameState.clickerSkin === skin.id) btn.classList.add('selected'); btn.innerHTML = skin.id === 'default' ? '🐊' : (skin.custom ? '🖼️' : '🎨'); btn.title = skin.name; btn.onclick = () => applyClickerSkin(skin.id); grid.appendChild(btn); }); document.getElementById('uploadCustomSkinBtn').onclick = () => { let fileInput = document.getElementById('customSkinUpload'); let file = fileInput.files[0]; if(file) { let reader = new FileReader(); reader.onload = (e) => uploadCustomSkin(e.target.result); reader.readAsDataURL(file); } else alert("Выберите картинку"); }; modal.classList.add('active'); document.querySelectorAll('.buySkinBtn').forEach(btn=>btn.addEventListener('click',()=>{ let skin=SKINS.find(s=>s.id===btn.dataset.id); if(gameState.diamonds>=skin.priceDiamonds && !gameState.ownedSkins.includes(skin.id)){ gameState.diamonds-=skin.priceDiamonds; gameState.ownedSkins.push(skin.id); if(skin.type==='frame') addFrame(skin.name); if(skin.type==='clickEffect') gameState.selectedClickEffect=skin.effect; if(skin.type==='avatar') gameState.selectedAvatar=skin.avatarUrl; persistGame(); updateUI(); showMessage(`Скин ${skin.name} куплен!`); openSkinShop(); } else showMessage("Ошибка"); })); document.getElementById('closeSkinShop').onclick=()=>modal.classList.remove('active'); }
+    function recalcPowerAndIncome(){ let totalInc=0; gameState.units.forEach(u=>totalInc+=u.income); gameState.incomePerMinute = totalInc; let basePower = 1+Math.floor(totalInc/10); if(Date.now() < gameState.upgrades.powerBuffEnd) basePower*=2; gameState.power = basePower; let p = gameState.power; gameState.arenaLevel = p<1000?1: p<10000?2: p<50000?3: p<250000?4: p<1000000?5:6; let skin = arenaSkins[gameState.arenaLevel-1]; let clickerSkin = clickerSkins.find(s => s.id === gameState.clickerSkin) || clickerSkins[0]; let content = clickerSkin.content; if(gameState.clickerSkin && gameState.clickerSkin.startsWith('custom_') && gameState.customSkin) { content = `<img src="${gameState.customSkin}" style="width:100%; border-radius:40px;">`; } document.getElementById('clickerImage').innerHTML = content; document.getElementById('arena-badge').innerHTML = `Арена ${gameState.arenaLevel}`; }
+    function renderShop(){let cont=document.getElementById('shop-container'); if(!cont) return; let upgrades=gameState.upgrades; let clickCost=10*Math.pow(2,upgrades.clickLevel-1); cont.innerHTML=`<div><div>💪 +1 к клику (+${gameState.clickIncome})</div><div>${clickCost}💎</div><button class="buy-shop" data-shop="click">Улучшить</button></div><div><div>❤️ Здоровье x2 на час</div><div>50💎</div><button class="buy-shop" data-shop="health">Купить</button></div><div><div>⚡ Мощь x2 на час</div><div>100💎</div><button class="buy-shop" data-shop="power">Купить</button></div><div><div>📈 Лимит кликов x2</div><div>150💎</div><button class="buy-shop" data-shop="limit">Увеличить</button></div>`; document.querySelectorAll('.buy-shop').forEach(btn=>btn.addEventListener('click',()=>{ let type=btn.dataset.shop; if(type==='click'){ let cost=10*Math.pow(2,upgrades.clickLevel-1); if(gameState.diamonds>=cost){gameState.diamonds-=cost; upgrades.clickLevel++; gameState.clickIncome=upgrades.clickLevel; updateUI(); persistGame(); renderShop();} else alert("Нет алмазов");} else if(type==='health'&&gameState.diamonds>=50){gameState.diamonds-=50; upgrades.healthBuffEnd=Date.now()+3600000; updateUI(); persistGame(); alert("Здоровье x2");} else if(type==='power'&&gameState.diamonds>=100){gameState.diamonds-=100; upgrades.powerBuffEnd=Date.now()+3600000; recalcPowerAndIncome(); updateUI(); persistGame(); alert("Мощь x2");} else if(type==='limit'&&gameState.diamonds>=150){gameState.diamonds-=150; gameState.dailyClickLimit*=2; updateUI(); persistGame(); alert("Лимит увеличен");} else alert("Не хватает");}));}
+    function resetDailyQuestsIfNeeded(){let today=new Date().toDateString(); if(!gameState.quests.lastDateStr) gameState.quests.lastDateStr=today; if(gameState.quests.lastDateStr!==today){gameState.quests.tasks.forEach(t=>{t.progress=0; t.claimed=false;}); gameState.quests.lastDateStr=today; persistGame();}}
+    function updateQuestProgress(type,delta=1){resetDailyQuestsIfNeeded(); gameState.quests.tasks.forEach(task=>{if(!task.claimed && task.type===type) task.progress=Math.min(task.need,task.progress+delta);}); renderQuestsModal();}
+    function claimQuest(idx){let task=gameState.quests.tasks[idx]; if(!task.claimed && task.progress>=task.need){if(task.rewardMoney) gameState.money+=task.rewardMoney; if(task.rewardDiamonds) gameState.diamonds+=task.rewardDiamonds; if(task.rewardPower) gameState.power+=task.rewardPower; if(task.rewardFrame) addFrame(task.rewardFrame); task.claimed=true; updateUI(); persistGame(); renderQuestsModal(); alert("Награда получена!");}}
+    function claimSubscribeQuest(){let task=gameState.quests.tasks.find(t=>t.type==='subscribe'); if(!task.claimed && task.progress===0){ task.progress=1; task.claimed=true; gameState.money+=task.rewardMoney; persistGame(); updateUI(); renderQuestsModal(); alert("Награда за подписку +500000💰"); }}
+    function renderQuestsModal(){let container=document.getElementById('questsList'); if(!container) return; resetDailyQuestsIfNeeded(); container.innerHTML=gameState.quests.tasks.map((t,idx)=>`<div><div>${t.type==='clicks'?'🖱️ Накликать':t.type==='battles'?'⚔️ Боёв':t.type==='mom_birthday'?'🌸 Поздравить маму':t.type==='subscribe'?'📺 Подписаться':t.type} ${t.need}</div><div>${t.progress}/${t.need}</div><div class="quest-progress"><div class="quest-progress-fill" style="width:${(t.progress/t.need)*100}%"></div></div><div>Награда: ${t.rewardMoney?t.rewardMoney+'💰':''} ${t.rewardDiamonds?t.rewardDiamonds+'💎':''} ${t.rewardPower?t.rewardPower+'⚡':''} ${t.rewardFrame?t.rewardFrame:''}</div>${!t.claimed && t.progress>=t.need ? `<button class="claim-btn" data-qidx="${idx}">Забрать</button>` : (t.claimed?'✅':(t.type==='subscribe'?'<button id="subscribeBtn">Подписаться</button>':''))}</div>`).join(''); document.querySelectorAll('.claim-btn').forEach(btn=>btn.addEventListener('click',(e)=>claimQuest(parseInt(btn.dataset.qidx)))); let subBtn=document.getElementById('subscribeBtn'); if(subBtn) subBtn.addEventListener('click',()=>{ window.open(gameState.quests.tasks.find(t=>t.type==='subscribe').link, '_blank'); claimSubscribeQuest(); });}
+    function updateBestBattleTime(seconds) { if(gameState.bestBattleTime === null || seconds < gameState.bestBattleTime) { gameState.bestBattleTime = seconds; showMessage(`🏆 Новый рекорд! ${seconds.toFixed(2)} сек`); persistGame(); } let records = JSON.parse(localStorage.getItem('tuntun_battle_records')||'{}'); if(!records[currentUsername] || seconds < records[currentUsername]) { records[currentUsername] = seconds; localStorage.setItem('tuntun_battle_records', JSON.stringify(records)); } renderRecords(); }
+    function renderRecords() { let container = document.getElementById('recordsContainer'); if(!container) return; let records = JSON.parse(localStorage.getItem('tuntun_battle_records')||'{}'); let sorted = Object.entries(records).sort((a,b)=>a[1]-b[1]).slice(0,10); let html = `<div>🏆 ТОП-10 РЕКОРДОВ (сек)</div><div>Ваш рекорд: ${gameState.bestBattleTime ? gameState.bestBattleTime.toFixed(2)+' сек' : '—'}</div>`; html += sorted.map(([name, time], i) => `<div class="record-item">${i+1}. ${name} — ${time.toFixed(2)} сек</div>`).join(''); container.innerHTML = html; }
+    function getBattleCost() { if(gameState.incomePerMinute <= 0) return 100; return gameState.incomePerMinute * 10; }
+    let pendingBattle = false;
+    function startBattleWithTimer() { if(battleActive) return; let cost = getBattleCost(); if(gameState.money < cost) { alert(`Не хватает монет! Нужно ${Math.floor(cost)}💰`); return; } pendingBattle = true; let timerOverlay = document.getElementById('timerOverlay'); let timerSpan = document.getElementById('timerValue'); let count = 3; timerSpan.innerText = count; timerOverlay.classList.add('active'); let interval = setInterval(() => { count--; timerSpan.innerText = count; if(count <= 0) { clearInterval(interval); timerOverlay.classList.remove('active'); if(pendingBattle) { pendingBattle = false; gameState.money -= cost; persistGame(); updateUI(); openBattleArena(); } } }, 1000); }
+    function openBattleArena() { let modal = document.getElementById('battleModal'); modal.classList.add('active'); let maxHits=50, playerHits=0, botHits=0, battleOver=false; let botSpeed = 5; battleStartTime = Date.now(); let interval = setInterval(()=>{ if(!battleOver){ botHits++; document.getElementById('botHits').innerText=botHits; if(botHits>=maxHits) finish(false); } }, 1000/botSpeed); let hitHandler = () => { if(battleOver) return; playerHits++; document.getElementById('playerHits').innerText=playerHits; if(playerHits>=maxHits) finish(true); flashElement(document.getElementById('playerSphere')); }; document.getElementById('battleHitBtn').onclick = hitHandler; let finish = (win) => { if(battleOver) return; battleOver=true; clearInterval(interval); let timeSpent = (Date.now() - battleStartTime) / 1000; if(win) { let oldPower = gameState.power; gameState.power = Math.floor(gameState.power * 2); let moneyReward = 500 + oldPower * 5; gameState.money += moneyReward; gameState.wins++; if(gameState.club) addClubWin(gameState.club.name); let diamondsGain = Math.random()<0.25?Math.floor(Math.random()*5)+1:0; gameState.diamonds += diamondsGain; showMessage(`ПОБЕДА! Мощь ${oldPower}→${gameState.power}, +${moneyReward}💰 +${diamondsGain}💎 Время: ${timeSpent.toFixed(2)} сек`); updateQuestProgress('battles',1); updateBestBattleTime(timeSpent); addWinForLeague(); } else { gameState.losses++; showMessage("ПОРАЖЕНИЕ!"); } recalcPowerAndIncome(); updateUI(); persistGame(); setTimeout(()=>modal.classList.remove('active'),2000); }; document.getElementById('playerHits').innerText=0; document.getElementById('botHits').innerText=0; }
+    function startBattle() { if(battleActive) return; startBattleWithTimer(); }
+    function persistGame(){if(currentUsername && gameState) saveGameToStorage(currentUsername, gameState);}
+    function clickHandler(){ if(gameState.moneyEarnedToday >= gameState.dailyClickLimit){alert("Лимит"); return;} let gain = gameState.clickIncome; gameState.money += gain; gameState.moneyEarnedToday += gain; gameState.totalClicks++; updateQuestProgress('clicks',1); flashElement(document.getElementById('clickerImage')); updateUI(); persistGame(); }
+    function applyWeeklyTax(){ let now=Date.now(); if(now - gameState.lastWeeklyTax >= 7*24*3600000){ let taxMoney=Math.floor(gameState.money*0.25); let taxDiamonds=Math.floor(gameState.diamonds*0.25); gameState.money-=taxMoney; gameState.diamonds-=taxDiamonds; if(gameState.money<0) gameState.money=0; if(gameState.diamonds<0) gameState.diamonds=0; gameState.lastWeeklyTax=now; persistGame(); return {taxMoney,taxDiamonds}; } return null; }
+    function checkAndClaimDailyStreak(){ let today=new Date().toDateString(); let lastDate=gameState.lastStreakClaim?new Date(gameState.lastStreakClaim).toDateString():null; if(lastDate===today) return {canClaim:false, message:"Уже получено"}; let yesterday=new Date(); yesterday.setDate(yesterday.getDate()-1); let isConsecutive=(lastDate===yesterday.toDateString()); if(gameState.dailyStreak===0||isConsecutive){ if(!isConsecutive && gameState.dailyStreak>0) gameState.dailyStreak=0; gameState.dailyStreak++; } else gameState.dailyStreak=1; let rewardMoney=500+gameState.dailyStreak*100; let rewardDiamonds=Math.floor(gameState.dailyStreak/5); gameState.money+=rewardMoney; gameState.diamonds+=rewardDiamonds; if(FRAME_REWARDS[gameState.dailyStreak]) addFrame(FRAME_REWARDS[gameState.dailyStreak]); gameState.lastStreakClaim=Date.now(); persistGame(); updateUI(); return {canClaim:true, rewardMoney, rewardDiamonds, streak:gameState.dailyStreak, frames:FRAME_REWARDS[gameState.dailyStreak]}; }
+    function renderStreakModal(){ let div=document.getElementById('streakInfo'); if(!div) return; let today=new Date().toDateString(); let lastDate=gameState.lastStreakClaim?new Date(gameState.lastStreakClaim).toDateString():null; let canClaim=lastDate!==today; div.innerHTML=`<div>🔥 Серия: ${gameState.dailyStreak} дней</div><div>Награда: ${500+gameState.dailyStreak*100}💰 + ${Math.floor(gameState.dailyStreak/5)}💎</div>${canClaim?'<div>Можно забрать!</div>':'<div>Уже сегодня</div>'}${FRAME_REWARDS[gameState.dailyStreak+1]?`<div>⭐ При серии ${gameState.dailyStreak+1} рамка "${FRAME_REWARDS[gameState.dailyStreak+1]}"</div>`:''}`; }
+    function registerUser(u,p){ let db=getUsersDB(); if(db[u]) return false; if(u.length<3||p.length<3) return false; db[u]={password:p,trustedDevices:[],banned:false}; saveUsersDB(db); let ns=createEmptyGameState(); ns.playerName=u; saveGameToStorage(u,ns); return true; }
+    function loginUser(u,p){ if(isBanned(u)) return null; let db=getUsersDB(); if(!db[u]) return null; if(ADMINS[u]){ if(ADMINS[u]!==p) return null; } else { let trusted=isDeviceTrusted(u,deviceToken); if(!trusted && db[u].password!==p) return null; if(!trusted && db[u].password===p) addTrustedDevice(u,deviceToken); } let st=loadGameFromStorage(u); if(!st) st=createEmptyGameState(); st.playerName=u; return st; }
+    function switchToAccount(username) { let state = loadGameFromStorage(username); if(!state) return; if(saveInterval) clearInterval(saveInterval); currentUsername = username; gameState = state; sessionStartTime = Date.now(); if(!gameState.bestBattleTime) gameState.bestBattleTime=null; if(!gameState.ownedSkins) gameState.ownedSkins=["Стандартная"]; if(!gameState.lastGiftSend) gameState.lastGiftSend={}; if(!gameState.leagueName) gameState.leagueName="Бронзовая"; if(!gameState.leagueStar) gameState.leagueStar=1; if(!gameState.leagueIcon) gameState.leagueIcon="🥉"; if(!gameState.clickerSkin) gameState.clickerSkin="default"; if(ADMINS[username]) { ALL_FRAMES.forEach(f => { if(!gameState.ownedFrames.includes(f)) gameState.ownedFrames.push(f); }); } resetDailyQuestsIfNeeded(); recalcPowerAndIncome(); updateUI(); updateLeague(); saveInterval=setInterval(persistGame,5000); document.getElementById('friend-link').innerHTML = window.location.origin+window.location.pathname+'?ref='+gameState.playerId; renderAccountSwitcher(); let adminNavBtn = document.querySelector('.nav-btn[data-tab="tab-admin"]'); if(ADMINS[username]){ if(!adminNavBtn){ let nav = document.getElementById('bottomNav'); let btn = document.createElement('button'); btn.className='nav-btn'; btn.setAttribute('data-tab','tab-admin'); btn.innerHTML='<span class="nav-icon">🔧</span>Админ'; nav.appendChild(btn); btn.addEventListener('click',()=>{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById('tab-admin').classList.add('active'); }); } initAdminPanel(); } else { if(adminNavBtn) adminNavBtn.remove(); } if(isMomBirthday() && !momEventActive) { activateMomEvent(); } else if(isMomBirthday()) { setTimeout(() => showMomCard(), 500); } }
+    function renderAccountSwitcher() { let accounts=getSavedAccounts(); let container=document.getElementById('accountSwitcher'); if(!container) return; if(accounts.length===0){ container.innerHTML='<button id="addAccountBtn">➕ Добавить аккаунт</button>'; document.getElementById('addAccountBtn')?.addEventListener('click', showAuthModal); return; } let options=accounts.map(acc=>`<option value="${acc}" ${acc===currentUsername?'selected':''}>${acc}</option>`).join(''); container.innerHTML=`<select id="accountSelect">${options}</select><button id="switchAccountBtn">🔄 Сменить</button><button id="addAccountBtn">➕ Добавить</button>`; document.getElementById('switchAccountBtn')?.addEventListener('click',()=>{ let selected=document.getElementById('accountSelect').value; if(selected && selected!==currentUsername) switchToAccount(selected); }); document.getElementById('addAccountBtn')?.addEventListener('click', showAuthModal); }
+    function showAuthModal() { document.getElementById('authOverlay').classList.add('active'); }
+    function hideAuthModal() { document.getElementById('authOverlay').classList.remove('active'); }
+    function initAdminPanel() { if(adminPanelCreated) return; let panelDiv = document.getElementById('adminPanel'); if(!panelDiv) return; panelDiv.innerHTML = ` <div class="admin-item"><h3>Выдача ресурсов</h3><input id="adminTarget" class="admin-input" placeholder="Ник"><input id="adminMoneyGive" class="admin-input" placeholder="Монеты" value="0"><input id="adminDiamondsGive" class="admin-input" placeholder="Алмазы" value="0"><input id="adminPowerGive" class="admin-input" placeholder="Мощь" value="0"><button id="adminGiveBtn">Выдать</button></div> <div class="admin-item"><h3>Очистка аккаунта</h3><input id="adminResetUser" class="admin-input" placeholder="Ник для сброса"><button id="adminResetProgressBtn">Сбросить прогресс</button><button id="adminWipeAllBtn">⚠️ ОЧИСТИТЬ ВСЕ АККАУНТЫ</button></div> <div class="admin-item"><h3>Блокировка</h3><input id="adminBanUser" class="admin-input" placeholder="Ник"><button id="adminBanBtn">Заблокировать</button><button id="adminUnbanBtn">Разблокировать</button></div> <div class="admin-item"><h3>Управление админами</h3><input id="newAdminName" class="admin-input" placeholder="Ник нового админа"><input id="newAdminPass" class="admin-input" type="password" placeholder="Пароль"><button id="addAdminBtn">Добавить админа</button><br><input id="delAdminName" class="admin-input" placeholder="Ник админа для удаления"><button id="delAdminBtn">Удалить админа</button><div id="adminList">Текущие админы: ${Object.keys(ADMINS).join(', ')}</div></div> <div class="admin-item"><h3>Управление промокодами</h3><input id="promoCodeName" class="admin-input" placeholder="Код"><select id="promoType"><option value="money">Монеты</option><option value="diamonds">Алмазы</option><option value="power">Сила</option><option value="frame">Рамка</option></select><input id="promoAmount" class="admin-input" placeholder="Количество / название рамки"><button id="createPromoBtn">Создать промокод</button><select id="delPromoSelect"></select><button id="delPromoBtn">Удалить промокод</button></div> <div id="adminResultMsg" style="margin-top:10px;color:#ffb347;"></div>`; let delSelect = document.getElementById('delPromoSelect'); function refreshPromoSelect() { delSelect.innerHTML = ''; for(let code in promoList) { let opt = document.createElement('option'); opt.value = code; opt.textContent = code; delSelect.appendChild(opt); } } refreshPromoSelect(); document.getElementById('createPromoBtn').addEventListener('click', () => { let code = document.getElementById('promoCodeName').value.trim(); let type = document.getElementById('promoType').value; let amount = document.getElementById('promoAmount').value.trim(); if(!code) { document.getElementById('adminResultMsg').innerText="Введите код"; return; } let reward = {}; if(type === 'money') reward.money = parseInt(amount) || 0; else if(type === 'diamonds') reward.diamonds = parseInt(amount) || 0; else if(type === 'power') reward.power = parseInt(amount) || 0; else if(type === 'frame') reward.frame = amount; if(addPromo(code, reward)) { document.getElementById('adminResultMsg').innerText=`Промокод ${code} создан`; refreshPromoSelect(); } else document.getElementById('adminResultMsg').innerText="Код уже существует"; }); document.getElementById('delPromoBtn').addEventListener('click', () => { let code = delSelect.value; if(code) { removePromo(code); refreshPromoSelect(); document.getElementById('adminResultMsg').innerText=`Промокод ${code} удалён`; } }); document.getElementById('adminGiveBtn').addEventListener('click',()=>{ let t=document.getElementById('adminTarget').value.trim(); let m=parseInt(document.getElementById('adminMoneyGive').value)||0; let d=parseInt(document.getElementById('adminDiamondsGive').value)||0; let p=parseInt(document.getElementById('adminPowerGive').value)||0; if(!t) return; let st=loadGameFromStorage(t); if(st){ st.money+=m; st.diamonds+=d; st.power+=p; saveGameToStorage(t,st); if(t===currentUsername){gameState=st; updateUI();} document.getElementById('adminResultMsg').innerText="Готово";} else document.getElementById('adminResultMsg').innerText="Не найден"; }); document.getElementById('adminResetProgressBtn').addEventListener('click',()=>{ let t=document.getElementById('adminResetUser').value.trim(); if(t){ let fresh=createEmptyGameState(); fresh.playerName=t; saveGameToStorage(t,fresh); if(t===currentUsername){gameState=fresh; updateUI();} document.getElementById('adminResultMsg').innerText=`Сброшен ${t}`; } }); document.getElementById('adminWipeAllBtn').addEventListener('click',()=>{ if(confirm("Очистить ВСЕ аккаунты?")){ for(let un in getUsersDB()){ let fresh=createEmptyGameState(); fresh.playerName=un; saveGameToStorage(un,fresh); } if(currentUsername){gameState=createEmptyGameState(); gameState.playerName=currentUsername; updateUI();} document.getElementById('adminResultMsg').innerText="Все очищено"; } }); document.getElementById('adminBanBtn').addEventListener('click',()=>{ let t=document.getElementById('adminBanUser').value.trim(); if(t && !ADMINS[t]) setBan(t,true); document.getElementById('adminResultMsg').innerText=t ? `${t} заблокирован` : ''; }); document.getElementById('adminUnbanBtn').addEventListener('click',()=>{ let t=document.getElementById('adminBanUser').value.trim(); if(t) setBan(t,false); document.getElementById('adminResultMsg').innerText=t ? `${t} разблокирован` : ''; }); document.getElementById('addAdminBtn').addEventListener('click',()=>{ let name = document.getElementById('newAdminName').value.trim(); let pass = document.getElementById('newAdminPass').value; if(name && pass && addAdmin(name, pass)) { document.getElementById('adminResultMsg').innerText=`Админ ${name} добавлен`; document.getElementById('adminList').innerHTML = `Текущие админы: ${Object.keys(ADMINS).join(', ')}`; } else document.getElementById('adminResultMsg').innerText="Ошибка добавления"; }); document.getElementById('delAdminBtn').addEventListener('click',()=>{ let name = document.getElementById('delAdminName').value.trim(); if(name && removeAdmin(name)) { document.getElementById('adminResultMsg').innerText=`Админ ${name} удалён`; document.getElementById('adminList').innerHTML = `Текущие админы: ${Object.keys(ADMINS).join(', ')}`; } else document.getElementById('adminResultMsg').innerText="Нельзя удалить или не найден"; }); adminPanelCreated = true; }
+    function updateUI(){ if(!gameState) return; document.getElementById('money-display').innerText = Math.floor(gameState.money); document.getElementById('diamonds-display').innerText = gameState.diamonds; document.getElementById('power-badge').innerHTML = `⚡ Мощь: ${Math.floor(gameState.power)}`; document.getElementById('income-display').innerHTML = Math.floor(gameState.incomePerMinute); document.getElementById('daily-display').innerHTML = `${Math.floor(gameState.moneyEarnedToday)}/${gameState.dailyClickLimit}`; document.getElementById('player-power-battle').innerHTML = Math.floor(gameState.power); let hp = gameState.power * 10; if(Date.now() < gameState.upgrades.healthBuffEnd) hp *= 2; document.getElementById('player-hp').innerHTML = hp; document.getElementById('unit-balance').innerHTML = Math.floor(gameState.money); document.getElementById('unit-diamonds').innerHTML = gameState.diamonds; document.getElementById('profile-name').innerHTML = gameState.playerName; let hours = Math.floor(gameState.totalPlayTime / 3600); let minutes = Math.floor((gameState.totalPlayTime % 3600) / 60); document.getElementById('profile-info').innerHTML = `<table class="profile-table"><tr><td>🖱️ Клики: ${gameState.totalClicks}NonNull\|🏆 Победы: ${gameState.wins}NonNull\|💀 Поражения: ${gameState.losses}NonNull\|⏱ Время: ${hours}ч ${minutes}мин</div></div>`; let avatarDiv = document.getElementById('avatarPreview'); if(avatarDiv) { if(gameState.avatarBase64) avatarDiv.innerHTML = `<img src="${gameState.avatarBase64}" class="avatar-img">`; else avatarDiv.innerHTML = gameState.selectedAvatar || '👤'; } updateAvatarFrame(); let container = document.getElementById('units-container'); if(container){ container.innerHTML = ''; let groups = {common:'Обычный',rare:'Редкий',epic:'Эпический',mythic:'Мифический',legendary:'Легендарный'}; for(let [rar,title] of Object.entries(groups)){ let sec = document.createElement('div'); sec.innerHTML = `<h3>${title}</h3>`; allUnits.filter(u=>u.rarity===rar).forEach(unit=>{ let owned = gameState.units.find(u=>u.id===unit.id); let lvl = owned ? owned.level : 0; let cost = getUnitCost(unit,lvl); let costText = (lvl>=6) ? "Макс" : `${Math.floor(cost)}💰`; let card = document.createElement('div'); card.className = `unit-card rarity-${rar}`; card.innerHTML = `<div><strong>${unit.name}</strong><br>Ур.${lvl}/6 | Доход:${Math.floor(owned?owned.income:unit.baseIncome)}/мин</div><button class="buy-unit" data-id="${unit.id}" ${lvl>=6?'disabled':''}>${costText}</button>`; sec.appendChild(card); }); container.appendChild(sec); } document.querySelectorAll('.buy-unit').forEach(btn=>btn.addEventListener('click',(e)=>{let id=btn.dataset.id; let u=allUnits.find(u=>u.id===id); if(u) buyUnit(u);})); } renderShop(); renderClubUI(); renderQuestsModal(); updateFrameSelect(); updateLeaderboardAndFriends(); renderRecords(); renderChat(); let cost = getBattleCost(); let fightBtn = document.getElementById('fight-btn'); if(fightBtn) fightBtn.innerHTML = `🎯 НАЧАТЬ БОЙ (${Math.floor(cost)}💰)`; if(ADMINS[currentUsername] && !adminPanelCreated) initAdminPanel(); let eventDiv = document.getElementById('event-info'); if(eventDiv) { if(momEventActive && !momQuestCompleted) { eventDiv.innerHTML = '🌺 Сегодня День рождения мамы! 🌺<br>🌸 Кликните по открытке, чтобы получить подарок! 🌸'; } else if(momEventActive && momQuestCompleted) { eventDiv.innerHTML = '🌺 Спасибо за поздравление! В честь праздника все клики удвоены до полуночи! 🌺'; } else { eventDiv.innerHTML = ''; } } }
+    function buildApp() {
+        document.body.innerHTML = `
+        <div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
+        <div id="timerOverlay" class="timer-overlay"><div id="timerValue">3</div></div>
+        <div id="authOverlay" class="auth-overlay"><div class="auth-card"><h2>🦎 Вход</h2><input id="loginUsername" placeholder="Никнейм"><input id="loginPassword" type="password" placeholder="Пароль"><button id="loginBtn">Войти</button><button id="registerBtn">Создать</button><div id="authMessage"></div><button id="closeAuthBtn">✖</button></div></div>
+        <div id="app">
+            <div class="tab-content active" id="tab-clicker"><div style="position:relative"><div class="clicker-image" id="clickerImage"></div><div class="clicker-header-icons" style="position:absolute; top:15px; left:15px; display:flex; gap:15px;"><div class="icon-btn" id="skinsIcon">🎨</div><div class="icon-btn" id="questsIcon">📋</div><div class="icon-btn" id="leaderboardIcon">🏆</div><div class="icon-btn" id="promoIcon">🎁</div><div class="icon-btn" id="streakIcon">🔥</div></div></div><div><div class="power-badge" id="power-badge">⚡ Мощь: 1</div><div class="power-badge" id="arena-badge">Арена 1</div><div id="leagueDisplay" class="league-badge"></div><div class="flex-row"><div class="stat">💰 <span id="money-display">0</span></div><div class="stat">💎 <span id="diamonds-display">0</span></div></div><div class="stat">📈 Доход/мин: <span id="income-display">0</span></div><div class="stat">📊 Лимит: <span id="daily-display">0</span>/<span id="daily-limit">100000</span></div><div id="recordsContainer" class="stat"></div><div id="event-info" class="stat"></div></div></div>
+            <div class="tab-content" id="tab-units"><h2>🗡 Юниты</h2><p>💰 <span id="unit-balance">0</span> | 💎 <span id="unit-diamonds">0</span></p><div id="units-container"></div></div>
+            <div class="tab-content" id="tab-battle"><h2>⚔️ АРЕНА</h2><div class="stat">❤️ Здоровье: <span id="player-hp">0</span></div><div class="stat">⚡ Сила: <span id="player-power-battle">0</span></div><button id="fight-btn">🎯 НАЧАТЬ БОЙ (100💰)</button><div class="battle-log">Стоимость: доход×10 (если доход=0, то 100). Победа: мощь ×2 + монеты (500 + сила×5)! Бот 5 уд/сек</div></div>
+            <div class="tab-content" id="tab-friends"><h2>👥 Друзья</h2><div id="friend-link"></div><button id="copy-link-btn">📋 Копировать ссылку</button><div id="friendsList"></div><div class="channel-link">📢 <a href="https://max.ru/join/nkpz-r_ULaJ9ji-6tws0cGvmhwTfywDsOtRGcQ_NBo0" target="_blank">Наш канал MAX</a></div></div>
+            <div class="tab-content" id="tab-shop"><h2>💎 Магазин</h2><div id="shop-container"></div><button id="skinShopBtn">🎨 Магазин скинов</button></div>
+            <div class="tab-content" id="tab-clubs"><h2>🏆 Клубы</h2><div id="clubInfo"></div><div id="clubActions"></div><div id="clubLeaderboard"></div></div>
+            <div class="tab-content" id="tab-chat"><h2>💬 ОБЩИЙ ЧАТ</h2><div class="chat-container"><div id="chatMessagesList" class="chat-messages"></div><div class="chat-input-area"><input type="text" id="chatInput" placeholder="Введите сообщение..."><button id="chatSendBtn">Отправить</button></div></div></div>
+            <div class="tab-content" id="tab-admin"><h2>🔧 Админ-панель</h2><div id="adminPanel"></div></div>
+            <div class="tab-content" id="tab-profile"><h2>👤 Профиль</h2><div id="accountSwitcher"></div><div style="display:flex;align-items:center;gap:15px;"><div class="avatar-wrapper"><div id="avatarFrameWrapper" class="frame-border"><div class="avatar-click" id="avatarPreview">👤</div></div></div><div><strong id="profile-name"></strong><div id="frameDisplay"></div></div><button id="uploadAvatarBtn">📸 Загрузить аватар</button><input type="file" id="avatarInput" style="display:none"></div><div id="profile-info"></div><div class="frame-select"><select id="frameSelect"></select></div><button id="logoutButton">🚪 Выйти</button><button id="achievementsBtn">🏅 Достижения</button></div>
+            <div class="bottom-nav" id="bottomNav"><button class="nav-btn active" data-tab="tab-clicker"><span class="nav-icon">🦎</span>Клик</button><button class="nav-btn" data-tab="tab-units"><span class="nav-icon">🗡️</span>Юниты</button><button class="nav-btn" data-tab="tab-battle"><span class="nav-icon">⚔️</span>Бой</button><button class="nav-btn" data-tab="tab-friends"><span class="nav-icon">👥</span>Друзья</button><button class="nav-btn" data-tab="tab-shop"><span class="nav-icon">💎</span>Магазин</button><button class="nav-btn" data-tab="tab-clubs"><span class="nav-icon">🏆</span>Клубы</button><button class="nav-btn" data-tab="tab-chat"><span class="nav-icon">💬</span>Чат</button><button class="nav-btn" data-tab="tab-profile"><span class="nav-icon">👤</span>Профиль</button></div>
+        </div>
+        <div id="battleModal" class="modal"><div class="modal-content battle-arena"><h2>⚔️ БОЙ</h2><div id="playerSphere" class="health-sphere">🐉<br><span class="hit-counter" id="playerHits">0</span>/50</div><div id="botSphere" class="health-sphere">🤖<br><span class="hit-counter" id="botHits">0</span>/50</div><button id="battleHitBtn">💥 УДАР!</button><button id="closeBattleModal">Закрыть</button></div></div>
+        <div id="skinShopModal" class="modal"><div class="modal-content"><h2>🎨 МАГАЗИН СКИНОВ</h2><div id="skinShopList"></div><button id="closeSkinShop">Закрыть</button></div></div>
+        <div id="achievementsModal" class="modal"><div class="modal-content"><h3>🏅 ДОСТИЖЕНИЯ</h3><div id="achievementsList"></div><button id="closeAchievements">Закрыть</button></div></div>
+        <div id="leaderboardModal" class="modal"><div class="modal-content"><h3>🏆 ТАБЛИЦА ЛИДЕРОВ</h3><div id="leaderboardList"></div><button id="closeLeaderboard">Закрыть</button></div></div>
+        <div id="questsModal" class="modal"><div class="modal-content"><h3>📋 КВЕСТЫ</h3><div id="questsList"></div><button id="closeQuests">Закрыть</button></div></div>
+        <div id="promoModal" class="modal"><div class="modal-content"><h3>🎁 ПРОМО-КОДЫ</h3><input id="promoCode" placeholder="Промокод"><button id="applyPromo">Активировать</button><div id="promoMessage"></div><hr><button id="applyTaxBtn">Налог 25%</button><button id="closePromoModal">Закрыть</button></div></div>
+        <div id="streakModal" class="modal"><div class="modal-content"><h3>📅 ЕЖЕДНЕВНАЯ СЕРИЯ</h3><div id="streakInfo"></div><button id="claimStreakBtn">Забрать</button><button id="closeStreak">Закрыть</button></div></div>`;
+        document.getElementById('clickerImage').addEventListener('click', clickHandler);
+        document.getElementById('fight-btn').addEventListener('click', startBattle);
+        document.getElementById('skinShopBtn').addEventListener('click', openSkinShop);
+        document.getElementById('copy-link-btn').addEventListener('click',()=>navigator.clipboard.writeText(document.getElementById('friend-link').innerText));
+        document.getElementById('logoutButton').addEventListener('click',()=>{ if(saveInterval)clearInterval(saveInterval); currentUsername=null; gameState=null; showAuthModal(); });
+        document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active'); }));
+        document.body.addEventListener('click', (e) => { if(e.target.classList && (e.target.classList.contains('close-btn') || e.target.id?.startsWith('close'))) { const modal = e.target.closest('.modal'); if(modal) modal.classList.remove('active'); } });
+        const closeBtns = ['closeBattleModal','closeSkinShop','closeAchievements','closeLeaderboard','closeQuests','closeStreak','closePromoModal'];
+        closeBtns.forEach(id => document.getElementById(id)?.addEventListener('click',()=>{ let modalId = id.replace('close','')+'Modal'; let modal = document.getElementById(modalId); if(modal) modal.classList.remove('active'); }));
+        document.getElementById('achievementsBtn')?.addEventListener('click',()=>{ document.getElementById('achievementsList').innerHTML = "Достижения временно отключены"; document.getElementById('achievementsModal').classList.add('active'); });
+        document.getElementById('streakIcon')?.addEventListener('click',()=>{ renderStreakModal(); document.getElementById('streakModal').classList.add('active'); });
+        document.getElementById('questsIcon')?.addEventListener('click',()=>{ renderQuestsModal(); document.getElementById('questsModal').classList.add('active'); });
+        document.getElementById('leaderboardIcon')?.addEventListener('click',()=>{ updateLeaderboardAndFriends(); document.getElementById('leaderboardModal').classList.add('active'); });
+        document.getElementById('promoIcon')?.addEventListener('click',()=>{ let tax=applyWeeklyTax(); if(tax) document.getElementById('promoMessage').innerHTML=`Налог: -${tax.taxMoney}💰 -${tax.taxDiamonds}💎`; else document.getElementById('promoMessage').innerHTML='Налог не требуется'; document.getElementById('promoModal').classList.add('active'); });
+        document.getElementById('applyPromo')?.addEventListener('click',()=>{ let code=document.getElementById('promoCode').value; let msg=applyPromoCode(code); document.getElementById('promoMessage').innerHTML=msg; if(msg.includes("+")) updateUI(); });
+        document.getElementById('applyTaxBtn')?.addEventListener('click',()=>{ let tax=applyWeeklyTax(); if(tax){ document.getElementById('promoMessage').innerHTML=`Налог: -${tax.taxMoney}💰 -${tax.taxDiamonds}💎`; updateUI(); } else document.getElementById('promoMessage').innerHTML="Налог уже был"; });
+        document.getElementById('claimStreakBtn')?.addEventListener('click',()=>{ let res=checkAndClaimDailyStreak(); if(res.canClaim) alert(`+${res.rewardMoney}💰 +${res.rewardDiamonds}💎 Серия ${res.streak}`); else alert(res.message); renderStreakModal(); updateUI(); document.getElementById('streakModal').classList.remove('active'); });
+        document.getElementById('skinsIcon')?.addEventListener('click', openSkinShop);
+        document.getElementById('loginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUsername').value.trim(); let p=document.getElementById('loginPassword').value; let res=loginUser(u,p); if(res){ addSavedAccount(u); switchToAccount(u); hideAuthModal(); } else document.getElementById('authMessage').innerText="Ошибка"; });
+        document.getElementById('registerBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUsername').value.trim(); let p=document.getElementById('loginPassword').value; if(registerUser(u,p)){ let res=loginUser(u,p); if(res){ addSavedAccount(u); switchToAccount(u); hideAuthModal(); } } else document.getElementById('authMessage').innerText="Регистрация не удалась"; });
+        document.getElementById('closeAuthBtn').addEventListener('click', hideAuthModal);
+        document.getElementById('chatSendBtn').addEventListener('click', () => { let input = document.getElementById('chatInput'); if(input) { sendChatMessage(input.value); input.value = ''; } });
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if(e.key === 'Enter') { let input = e.target; sendChatMessage(input.value); input.value = ''; } });
+        setupAvatarUpload(); renderAccountSwitcher(); loadChat(); renderChat();
+        let last = getLastAccount();
+        if(last && loadGameFromStorage(last)) switchToAccount(last);
+        else if(getSavedAccounts().length > 0) switchToAccount(getSavedAccounts()[0]);
+        else showAuthModal();
+        setInterval(()=>{ if(gameState && currentUsername){ let delta=Math.floor((Date.now()-sessionStartTime)/1000); gameState.totalPlayTime+=delta; sessionStartTime=Date.now(); persistGame(); updateUI(); } }, 60000);
+        setInterval(()=>{ if(gameState && currentUsername){ let inc=gameState.incomePerMinute/60; if(inc>0){ gameState.money+=inc; updateUI(); persistGame(); } } }, 1000);
+        if(isMomBirthday() && !momEventActive) { setTimeout(() => activateMomEvent(), 500); } else if(isMomBirthday()) { setTimeout(() => showMomCard(), 500); }
+        showMessage("✨ Добавлены лиги Мастер (жёлтая) и Про (зелёная) со значками! Награда за маму — один раз на аккаунт.");
+        setTimeout(()=>document.getElementById('globalLoading').classList.remove('active'), 800);
+    }
+    buildApp();
+</script>
+</body>
+</html>
