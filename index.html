@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тун Тун Тун Заур — Кликер + Карточки + Крипта + Рынок + Админ (DushkaYaroslav)</title>
+    <title>Тун Тун Тун Заур — Кликер + Карточки + Крипта + Рынок + Админ (DushkaYaroslav) + ID предметов</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s; }
@@ -74,12 +74,29 @@
         .club-tabs { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .club-tab-btn { background: #2a2a45; color: #fff; border: 1px solid #ffb347; }
         .club-tab-btn.active { background: #ffb347; color: #000; }
-        .skin-preview { width: 60px; height: 60px; background: #2a2a45; border-radius: 16px; margin: 5px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #ffb347; }
+        .skin-preview { width: 60px; height: 60px; background: #2a2a45; border-radius: 16px; margin: 5px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid #ffb347; position: relative; }
         .skin-preview.selected { border-color: gold; transform: scale(1.05); }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px,1fr)); gap: 6px; margin-top: 10px; max-height: 300px; overflow-y: auto; }
-        .card-item { background: #1e1e2f; border-radius: 12px; padding: 6px; text-align: center; font-size: 11px; border: 1px solid #ffb347; }
+        .card-item { background: #1e1e2f; border-radius: 12px; padding: 6px; text-align: center; font-size: 11px; border: 1px solid #ffb347; cursor: pointer; position: relative; }
         .card-owned { opacity: 0.6; background: #2a2a55; }
-        .listing-item, .coin-item { background: #1e1e2f; border-radius: 16px; padding: 12px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .listing-item, .coin-item { background: #1e1e2f; border-radius: 16px; padding: 12px; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
+        [data-tooltip] { position: relative; cursor: help; }
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000000cc;
+            color: #ffb347;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            white-space: nowrap;
+            z-index: 10000;
+            pointer-events: none;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +104,7 @@
 <script>
     // ==================== ОБЪЕДИНЁННЫЙ КОД С АДМИН-ПАНЕЛЬЮ ТОЛЬКО ДЛЯ DushkaYaroslav ====================
     // ---------- КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
-    let ADMINS = { "DushkaYaroslav": "16052014" };  // единственный админ
+    let ADMINS = { "DushkaYaroslav": "16052014" };
     let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
     const LEAGUES = [
         { name: "Бронзовая", star: 1, frame: "Бронзовая рамка", icon: "🥉" }, { name: "Бронзовая", star: 2, frame: "Бронзовая рамка", icon: "🥉" }, { name: "Бронзовая", star: 3, frame: "Бронзовая рамка", icon: "🥉" },
@@ -138,7 +155,37 @@
     const TOTAL_CARDS = allCards.length;
 
     // ------------------------------------------------------------
-    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    // ФУНКЦИЯ ДЛЯ ДОБАВЛЕНИЯ ВСПЛЫВАЮЩЕЙ ПОДСКАЗКИ С ID
+    function setTooltip(element, id, description) {
+        element.setAttribute('data-tooltip', `${description} (ID: ${id})`);
+        element.setAttribute('data-item-id', id);
+        return element;
+    }
+
+    // Глобальный обработчик клавиши 'р' (русская) и 'r' (латинская)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'р' || e.key === 'r') {
+            let elem = document.elementFromPoint(e.clientX, e.clientY);
+            if (!elem) return;
+            let target = elem.closest('[data-item-id]');
+            if (target && target.dataset.itemId) {
+                showMessage(`🆔 ID предмета: ${target.dataset.itemId}`);
+                e.preventDefault();
+                return;
+            }
+            let tooltipElem = elem.closest('[data-tooltip]');
+            if (tooltipElem && tooltipElem.dataset.tooltip) {
+                let match = tooltipElem.dataset.tooltip.match(/ID: (.+)/);
+                if (match) showMessage(`🆔 ID предмета: ${match[1]}`);
+                else showMessage(`ℹ️ ${tooltipElem.dataset.tooltip}`);
+                e.preventDefault();
+                return;
+            }
+            showMessage("❓ Наведите курсор на предмет и нажмите 'р' – ID появится в подсказке.");
+        }
+    });
+
+    // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
     function showMessage(msg) { let d = document.createElement('div'); d.className = 'notification'; d.innerText = msg; document.body.appendChild(d); setTimeout(()=>d.remove(), 3000); }
     function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     function persistGame() { if(currentUsername && gameState) localStorage.setItem(`tuntun_game_${currentUsername}`, JSON.stringify(gameState)); }
@@ -309,15 +356,77 @@
     }
 
     // ---------- МАГАЗИН СКИНОВ, РАМКИ, АВАТАР ----------
-    function updateFrameSelect() { let select = document.getElementById('frameSelect'); if(!select) return; select.innerHTML = ''; gameState.ownedFrames.forEach(f => { let opt = document.createElement('option'); opt.value = f; opt.textContent = f; if(f === gameState.selectedFrame) opt.selected = true; select.appendChild(opt); }); select.onchange = () => { gameState.selectedFrame = select.value; persistGame(); updateUI(); }; document.getElementById('frameDisplay').innerHTML = `Рамка: ${gameState.selectedFrame}`; updateAvatarFrame(); }
+    function updateFrameSelect() { 
+        let select = document.getElementById('frameSelect'); 
+        if(!select) return; 
+        select.innerHTML = ''; 
+        gameState.ownedFrames.forEach(f => { 
+            let opt = document.createElement('option'); 
+            opt.value = f; 
+            opt.textContent = f; 
+            if(f === gameState.selectedFrame) opt.selected = true; 
+            setTooltip(opt, f, `Рамка ${f}`);
+            select.appendChild(opt); 
+        }); 
+        select.onchange = () => { gameState.selectedFrame = select.value; persistGame(); updateUI(); }; 
+        document.getElementById('frameDisplay').innerHTML = `Рамка: ${gameState.selectedFrame}`; 
+        updateAvatarFrame(); 
+    }
     function updateAvatarFrame() { let wrap = document.getElementById('avatarFrameWrapper'); if(!wrap) return; let f = gameState.selectedFrame; if(f.includes("Золотая")) wrap.style.background = "linear-gradient(135deg, #FFD700, #B8860B)"; else if(f.includes("Алмазная")) wrap.style.background = "linear-gradient(135deg, #E0FFFF, #00CED1)"; else if(f.includes("Платиновая")) wrap.style.background = "linear-gradient(135deg, #E5E4E2, #B0C4DE)"; else if(f.includes("Пламенная")) wrap.style.background = "linear-gradient(135deg, #FF4500, #FF0000)"; else if(f.includes("Ледяная")) wrap.style.background = "linear-gradient(135deg, #00BFFF, #1E90FF)"; else if(f.includes("Лунная")) wrap.style.background = "linear-gradient(135deg, #FFDAB9, #FFB6C1)"; else if(f.includes("Грозовая")) wrap.style.background = "linear-gradient(135deg, #9400D3, #4B0082)"; else if(f.includes("Мастерская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00)"; else if(f.includes("Про-рамка")) wrap.style.background = "linear-gradient(135deg, #7CFC00, #228B22)"; else if(f.includes("Мамин цветок")) wrap.style.background = "linear-gradient(135deg, #FF69B4, #FF1493)"; else wrap.style.background = "transparent"; }
     function setupAvatarUpload() { let input = document.getElementById('avatarInput'); let preview = document.getElementById('avatarPreview'); if(!input || !preview) return; document.getElementById('uploadAvatarBtn').onclick = () => input.click(); input.onchange = (e) => { let file = e.target.files[0]; if(!file) return; let reader = new FileReader(); reader.onload = (ev) => { gameState.avatarBase64 = ev.target.result; persistGame(); updateUI(); updateLeaderboardAndFriends(); }; reader.readAsDataURL(file); }; }
-    function openSkinShop() { let modal = document.getElementById('skinShopModal'); if(!modal) return; let container = document.getElementById('skinShopList'); container.innerHTML = SKINS.map(s=>`<div><b>${s.name}</b> - ${s.priceDiamonds}💎<button class="buySkinBtn" data-id="${s.id}">Купить</button></div>`).join(''); let clickerSkinDiv = document.createElement('div'); clickerSkinDiv.innerHTML = '<h3>Скины кликера:</h3><div id="clickerSkinGrid" style="display:flex; flex-wrap:wrap;"></div><div><input type="file" id="customSkinUpload" accept="image/*"><button id="uploadCustomSkinBtn">Загрузить свою картинку</button></div>'; container.appendChild(clickerSkinDiv); let grid = document.getElementById('clickerSkinGrid'); clickerSkins.forEach(skin => { let btn = document.createElement('div'); btn.className = 'skin-preview'; if(gameState.clickerSkin === skin.id) btn.classList.add('selected'); btn.innerHTML = skin.id === 'default' ? '🐊' : (skin.custom ? '🖼️' : '🎨'); btn.title = skin.name; btn.onclick = () => applyClickerSkin(skin.id); grid.appendChild(btn); }); document.getElementById('uploadCustomSkinBtn').onclick = () => { let fileInput = document.getElementById('customSkinUpload'); let file = fileInput.files[0]; if(file) { let reader = new FileReader(); reader.onload = (e) => uploadCustomSkin(e.target.result); reader.readAsDataURL(file); } else alert("Выберите картинку"); }; modal.classList.add('active'); document.querySelectorAll('.buySkinBtn').forEach(btn=>btn.addEventListener('click',()=>{ let skin=SKINS.find(s=>s.id===btn.dataset.id); if(gameState.diamonds>=skin.priceDiamonds && !gameState.ownedSkins.includes(skin.id)){ gameState.diamonds-=skin.priceDiamonds; gameState.ownedSkins.push(skin.id); if(skin.type==='frame') addFrame(skin.name); if(skin.type==='clickEffect') gameState.selectedClickEffect=skin.effect; if(skin.type==='avatar') gameState.selectedAvatar=skin.avatarUrl; persistGame(); updateUI(); showMessage(`Скин ${skin.name} куплен!`); openSkinShop(); } else showMessage("Ошибка"); })); document.getElementById('closeSkinShop').onclick=()=>modal.classList.remove('active'); }
+    function openSkinShop() { 
+        let modal = document.getElementById('skinShopModal'); 
+        if(!modal) return; 
+        let container = document.getElementById('skinShopList'); 
+        container.innerHTML = ''; 
+        SKINS.forEach(s => { 
+            let div = document.createElement('div'); 
+            div.innerHTML = `<b>${s.name}</b> - ${s.priceDiamonds}💎<button class="buySkinBtn" data-id="${s.id}">Купить</button>`; 
+            setTooltip(div, s.id, `Скин ${s.name}`); 
+            container.appendChild(div); 
+        }); 
+        let clickerSkinDiv = document.createElement('div'); 
+        clickerSkinDiv.innerHTML = '<h3>Скины кликера:</h3><div id="clickerSkinGrid" style="display:flex; flex-wrap:wrap;"></div><div><input type="file" id="customSkinUpload" accept="image/*"><button id="uploadCustomSkinBtn">Загрузить свою картинку</button></div>'; 
+        container.appendChild(clickerSkinDiv); 
+        let grid = document.getElementById('clickerSkinGrid'); 
+        clickerSkins.forEach(skin => { 
+            let btn = document.createElement('div'); 
+            btn.className = 'skin-preview'; 
+            if(gameState.clickerSkin === skin.id) btn.classList.add('selected'); 
+            btn.innerHTML = skin.id === 'default' ? '🐊' : (skin.custom ? '🖼️' : '🎨'); 
+            btn.title = skin.name; 
+            setTooltip(btn, skin.id, `Скин кликера ${skin.name}`);
+            btn.onclick = () => applyClickerSkin(skin.id); 
+            grid.appendChild(btn); 
+        }); 
+        document.getElementById('uploadCustomSkinBtn').onclick = () => { 
+            let fileInput = document.getElementById('customSkinUpload'); 
+            let file = fileInput.files[0]; 
+            if(file) { 
+                let reader = new FileReader(); 
+                reader.onload = (e) => uploadCustomSkin(e.target.result); 
+                reader.readAsDataURL(file); 
+            } else alert("Выберите картинку"); 
+        }; 
+        modal.classList.add('active'); 
+        document.querySelectorAll('.buySkinBtn').forEach(btn=>btn.addEventListener('click',()=>{ 
+            let skin=SKINS.find(s=>s.id===btn.dataset.id); 
+            if(gameState.diamonds>=skin.priceDiamonds && !gameState.ownedSkins.includes(skin.id)){ 
+                gameState.diamonds-=skin.priceDiamonds; 
+                gameState.ownedSkins.push(skin.id); 
+                if(skin.type==='frame') addFrame(skin.name); 
+                if(skin.type==='clickEffect') gameState.selectedClickEffect=skin.effect; 
+                if(skin.type==='avatar') gameState.selectedAvatar=skin.avatarUrl; 
+                persistGame(); updateUI(); showMessage(`Скин ${skin.name} куплен!`); openSkinShop(); 
+            } else showMessage("Ошибка"); 
+        })); 
+        document.getElementById('closeSkinShop').onclick=()=>modal.classList.remove('active'); 
+    }
     function applyClickerSkin(skinId) { let skin = clickerSkins.find(s => s.id === skinId); if(!skin) return; gameState.clickerSkin = skinId; persistGame(); recalcPowerAndIncome(); showMessage(`Скин "${skin.name}" установлен!`); }
     function uploadCustomSkin(base64) { let id = "custom_"+Date.now(); clickerSkins.push({ id: id, name: "Пользовательский", content: `<img src="${base64}" style="width:100%; border-radius:40px;">`, custom: true }); gameState.clickerSkin = id; gameState.customSkin = base64; persistGame(); recalcPowerAndIncome(); showMessage("Свой скин установлен!"); }
     function renderShop(){ let cont=document.getElementById('shop-container'); if(!cont) return; let upgrades=gameState.upgrades; let clickCost=10*Math.pow(2,upgrades.clickLevel-1); cont.innerHTML=`<div><div>💪 +1 к клику (+${gameState.clickIncome})</div><div>${clickCost}💎</div><button class="buy-shop" data-shop="click">Улучшить</button></div><div><div>❤️ Здоровье x2 на час</div><div>50💎</div><button class="buy-shop" data-shop="health">Купить</button></div><div><div>⚡ Мощь x2 на час</div><div>100💎</div><button class="buy-shop" data-shop="power">Купить</button></div><div><div>📈 Лимит кликов x2</div><div>150💎</div><button class="buy-shop" data-shop="limit">Увеличить</button></div>`; document.querySelectorAll('.buy-shop').forEach(btn=>btn.addEventListener('click',()=>{ let type=btn.dataset.shop; if(type==='click'){ let cost=10*Math.pow(2,upgrades.clickLevel-1); if(gameState.diamonds>=cost){gameState.diamonds-=cost; upgrades.clickLevel++; gameState.clickIncome=upgrades.clickLevel; updateUI(); persistGame(); renderShop();} else alert("Нет алмазов");} else if(type==='health'&&gameState.diamonds>=50){gameState.diamonds-=50; upgrades.healthBuffEnd=Date.now()+3600000; updateUI(); persistGame(); alert("Здоровье x2");} else if(type==='power'&&gameState.diamonds>=100){gameState.diamonds-=100; upgrades.powerBuffEnd=Date.now()+3600000; recalcPowerAndIncome(); updateUI(); persistGame(); alert("Мощь x2");} else if(type==='limit'&&gameState.diamonds>=150){gameState.diamonds-=150; gameState.dailyClickLimit*=2; updateUI(); persistGame(); alert("Лимит увеличен");} else alert("Не хватает");})); }
 
-    // ---------- КАРТОЧКИ ----------
+    // ---------- КАРТОЧКИ (с ID в подсказке) ----------
     function getUniqueCardsCount() { return Object.values(gameState.cards || {}).filter(cnt => cnt > 0).length; }
     function getPackPrice() { let unique = getUniqueCardsCount(); if(unique < 10) return 100; if(unique < 100) return 1000; return 10000; }
     function openPack() {
@@ -362,14 +471,18 @@
         if(!container) return;
         if(!gameState.cards) gameState.cards = {};
         let unique = getUniqueCardsCount();
-        let html = `<div>📊 Прогресс: ${unique}/${TOTAL_CARDS} (${Math.floor(unique/TOTAL_CARDS*100)}%)</div><div>💰 Цена пака: ${getPackPrice()}💎</div><button id="openPackBtn">🎲 Открыть пак</button><div class="card-grid">`;
+        let html = `<div>📊 Прогресс: ${unique}/${TOTAL_CARDS} (${Math.floor(unique/TOTAL_CARDS*100)}%)</div><div>💰 Цена пака: ${getPackPrice()}💎</div><button id="openPackBtn">🎲 Открыть пак</button><div class="card-grid" id="cardGrid"></div>`;
+        container.innerHTML = html;
+        let grid = document.getElementById('cardGrid');
         for(let card of allCards) {
             let count = gameState.cards[card.id] || 0;
             let ownedClass = count>0 ? 'card-owned' : '';
-            html += `<div class="card-item ${ownedClass}"><b>${card.name}</b><br>${RARITY_NAMES[card.rarity]} x${count}</div>`;
+            let cardDiv = document.createElement('div');
+            cardDiv.className = `card-item ${ownedClass}`;
+            cardDiv.innerHTML = `<b>${card.name}</b><br>${RARITY_NAMES[card.rarity]} x${count}`;
+            setTooltip(cardDiv, card.id, card.name);
+            grid.appendChild(cardDiv);
         }
-        html += `</div>`;
-        container.innerHTML = html;
         document.getElementById('openPackBtn')?.addEventListener('click', openPack);
     }
 
@@ -444,25 +557,28 @@
         let container = document.getElementById('exchangeContainer');
         if(!container) return;
         let coinsDB = getCoinsDB();
-        let html = `<h3>Создать новую монету</h3><input id="newCoinName" placeholder="Название монеты" maxlength="20"><button id="createCoinBtn">Создать за 5000💎</button><hr>`;
+        let html = `<h3>Создать новую монету</h3><input id="newCoinName" placeholder="Название монеты" maxlength="20"><button id="createCoinBtn">Создать за 5000💎</button><hr><div id="coinsList"></div>`;
+        container.innerHTML = html;
+        let coinsList = document.getElementById('coinsList');
         for(let id in coinsDB) {
             let coin = coinsDB[id];
             let price = getCoinPrice(coin);
             let myBalance = (gameState.coinBalances?.[id]?.[currentUsername] || 0);
-            html += `<div class="coin-item">
-                        <b>${coin.name}</b> (владелец: ${coin.owner})<br>
-                        💎 Резерв: ${coin.reserve.toFixed(2)} | 🪙 Эмиссия: ${coin.supply.toFixed(2)}<br>
-                        💲 Цена: ${price.toFixed(6)}💎/монета<br>
-                        Ваш баланс: ${myBalance.toFixed(2)} монет<br>
-                        <div class="flex-row">
-                            <input type="number" id="buyAmount_${id}" placeholder="Алмазов" style="width:100px">
-                            <button class="buyCoinBtn" data-id="${id}">Купить</button>
-                            <input type="number" id="sellAmount_${id}" placeholder="Монет" style="width:100px">
-                            <button class="sellCoinBtn" data-id="${id}">Продать</button>
-                        </div>
-                     </div>`;
+            let coinDiv = document.createElement('div');
+            coinDiv.className = 'coin-item';
+            coinDiv.innerHTML = `<b>${coin.name}</b> (владелец: ${coin.owner})<br>
+                                💎 Резерв: ${coin.reserve.toFixed(2)} | 🪙 Эмиссия: ${coin.supply.toFixed(2)}<br>
+                                💲 Цена: ${price.toFixed(6)}💎/монета<br>
+                                Ваш баланс: ${myBalance.toFixed(2)} монет<br>
+                                <div class="flex-row">
+                                    <input type="number" id="buyAmount_${id}" placeholder="Алмазов" style="width:100px">
+                                    <button class="buyCoinBtn" data-id="${id}">Купить</button>
+                                    <input type="number" id="sellAmount_${id}" placeholder="Монет" style="width:100px">
+                                    <button class="sellCoinBtn" data-id="${id}">Продать</button>
+                                </div>`;
+            setTooltip(coinDiv, id, `Монета ${coin.name}`);
+            coinsList.appendChild(coinDiv);
         }
-        container.innerHTML = html;
         document.getElementById('createCoinBtn')?.addEventListener('click', () => {
             let name = document.getElementById('newCoinName').value.trim();
             if(name) createCoin(name);
@@ -554,17 +670,25 @@
                         <input id="sellPrice" placeholder="Цена в 💎">
                         <button id="createLotBtn">Выставить</button>
                     </div>
-                    <hr><h3>Активные лоты</h3>`;
+                    <hr><h3>Активные лоты</h3><div id="activeLots"></div>`;
+        container.innerHTML = html;
+        let lotsContainer = document.getElementById('activeLots');
         for(let lot of marketLots) {
             let itemName = '';
             if(lot.type === 'card') { let card = allCards.find(c => c.id == lot.itemId); itemName = card ? card.name : 'Карта'; }
             else itemName = lot.itemId;
-            html += `<div class="listing-item">
-                        ${itemName} (${lot.type}) от ${lot.seller} за ${lot.price}💎
-                        ${lot.seller !== currentUsername ? `<button class="buyLotBtn" data-id="${lot.id}">Купить</button>` : 'Ваш лот'}
-                     </div>`;
+            let lotDiv = document.createElement('div');
+            lotDiv.className = 'listing-item';
+            lotDiv.innerHTML = `${itemName} (${lot.type}) от ${lot.seller} за ${lot.price}💎
+                                ${lot.seller !== currentUsername ? `<button class="buyLotBtn" data-id="${lot.id}">Купить</button>` : 'Ваш лот'}`;
+            let tooltipText = `ID лота: ${lot.id} | Предмет: ${itemName} (${lot.type})`;
+            setTooltip(lotDiv, lot.id, tooltipText);
+            if(lot.seller !== currentUsername) {
+                let btn = lotDiv.querySelector('.buyLotBtn');
+                if(btn) btn.addEventListener('click', () => buyLot(lot.id));
+            }
+            lotsContainer.appendChild(lotDiv);
         }
-        container.innerHTML = html;
         document.getElementById('createLotBtn')?.addEventListener('click', () => {
             let type = document.getElementById('sellType').value;
             let itemId = document.getElementById('sellItemId').value;
@@ -573,9 +697,6 @@
             if(createLot(type, itemId, price)) showMessage("Лот выставлен");
             else showMessage("Ошибка: нет такого предмета");
             renderMarket();
-        });
-        document.querySelectorAll('.buyLotBtn').forEach(btn => {
-            btn.addEventListener('click', () => buyLot(parseFloat(btn.dataset.id)));
         });
     }
 
