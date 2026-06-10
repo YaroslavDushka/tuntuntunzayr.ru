@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тун Тун Тун Заур — Полная версия: блокировка, личные сообщения, страны в топе</title>
+    <title>Тун Тун Тун Заур — Полная версия: кликер, карточки, крипта, рынок, лиги, сообщения, блокировка, страны</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s, background-color 0.3s; }
@@ -110,11 +110,16 @@
         .achievement-progress { background: #444; border-radius: 20px; height: 12px; margin: 5px 0; }
         .achievement-progress-fill { background: #ffb347; width: 0%; height: 100%; border-radius: 20px; }
         body.light-theme .achievement-item { background: #ffffff; }
+        
+        /* Исправление загрузочного экрана */
+        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #000000dd; backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 5000; visibility: visible; opacity: 1; transition: 0.2s; }
+        .loading-overlay.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
     </style>
 </head>
-<body><div id="app"></div>
+<body><div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
+<div id="app"></div>
 <script>
-    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ ====================
+    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ (ИСПРАВЛЕНА) ====================
     let ADMINS = { "DushkaYaroslav": "16052014" };
     let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
     const LEAGUES = [
@@ -1167,8 +1172,7 @@
         updateAchievementIncome();
         updateAchievementDiamonds();
         updateAchievementStreak();
-        renderAchievements();
-        renderPrivateMessages();
+        // Рендер достижений и сообщений теперь в addExtraUI, который будет вызван после
     }
     function renderAccountSwitcher() {
         let accounts = getSavedAccounts();
@@ -1258,7 +1262,6 @@
         }
         updateAchievementDiamonds();
         updateAchievementStreak();
-        renderAchievements();
     }
 
     // ---------- НАСТРОЙКИ, РЕЙТИНГ КАРТ ----------
@@ -1297,17 +1300,27 @@
             let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-messages'; tabDiv.innerHTML = `<h2>💌 ЛИЧНЫЕ СООБЩЕНИЯ</h2><div id="privateMessagesList"></div><div class="flex-row"><input id="messageRecipient" placeholder="Кому"><input id="messageText" placeholder="Текст"><button id="sendMessageBtn">Отправить</button></div>`; document.getElementById('app').appendChild(tabDiv);
             document.getElementById('sendMessageBtn')?.addEventListener('click',()=>{ let to = document.getElementById('messageRecipient').value.trim(); let text = document.getElementById('messageText').value.trim(); if(to && text) sendPrivateMessage(to, text); document.getElementById('messageText').value = ''; });
         }
+        // Принудительный рендер после создания контейнеров
+        renderAchievements();
+        renderPrivateMessages();
     }
 
     loadSettings();
     let originalSwitch = switchToAccount;
-    window.switchToAccount = function(username) { originalSwitch(username); addExtraUI(); renderPrivateMessages(); };
+    window.switchToAccount = function(username) {
+        originalSwitch(username);
+        addExtraUI();
+        let cardLeaderTab = document.querySelector('.nav-btn[data-tab="tab-card-leaderboard"]');
+        if(cardLeaderTab) cardLeaderTab.addEventListener('click', () => renderCardLeaderboard());
+        // Скрываем загрузку, если она ещё видна
+        let loader = document.getElementById('globalLoading');
+        if(loader) loader.classList.add('hidden');
+    };
     setTimeout(() => { if(currentUsername) addExtraUI(); }, 1000);
 
     // ---------- ПОСТРОЕНИЕ ИНТЕРФЕЙСА ----------
     function buildApp() {
         document.body.innerHTML = `
-        <div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
         <div id="timerOverlay" class="timer-overlay"><div id="timerValue">3</div></div>
         <div id="authOverlay" class="auth-overlay active"><div class="auth-card"><h2>🦎 Вход</h2><input id="loginUsername" placeholder="Никнейм"><input id="loginPassword" type="password" placeholder="Пароль"><button id="loginBtn">Войти</button><button id="registerBtn">Создать</button><div id="authMessage"></div></div></div>
         <div id="app">
@@ -1365,7 +1378,8 @@
         setInterval(()=>{ if(gameState && currentUsername){ let delta=Math.floor((Date.now()-sessionStartTime)/1000); gameState.totalPlayTime+=delta; sessionStartTime=Date.now(); persistGame(); updateUI(); } }, 60000);
         setInterval(()=>{ if(gameState && currentUsername){ let inc=gameState.incomePerMinute/60; if(inc>0){ gameState.money+=inc; updateUI(); persistGame(); } } }, 1000);
         if(isMomBirthday() && !momEventActive) setTimeout(()=>activateMomEvent(),500);
-        setTimeout(()=>document.getElementById('globalLoading')?.classList.remove('active'),800);
+        // Принудительно скрываем загрузку через 2 секунды на случай ошибок
+        setTimeout(()=>{ let loader = document.getElementById('globalLoading'); if(loader) loader.classList.add('hidden'); }, 2000);
     }
     buildApp();
 </script>
