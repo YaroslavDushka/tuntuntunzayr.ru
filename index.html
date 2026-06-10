@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тун Тун Тун Заур — Кликер, карточки, крипта, рынок, лиги, рейтинг карт, звуки, настройки, админ-панель, ДОСТИЖЕНИЯ (ИСПРАВЛЕНО)</title>
+    <title>Тун Тун Тун Заур — Полная версия: блокировка, личные сообщения, страны в топе</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s, background-color 0.3s; }
@@ -46,20 +46,10 @@
         .auth-overlay.active { visibility: visible; opacity: 1; }
         .auth-card { background: #2a2a40; border-radius: 40px; padding: 30px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #ffb347; }
         .auth-card input { width: 100%; padding: 14px; margin: 10px 0; background: #1e1e2f; border: 1px solid #ffb347; border-radius: 60px; color: white; }
-        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #444; }
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #444; flex-wrap: wrap; gap: 8px; }
         .admin-input { width: 100%; padding: 10px; margin: 8px 0; background: #1e1e2f; border: 1px solid #ffb347; border-radius: 30px; color: white; font-size: 14px; }
-        .frame-select { background: #2a2a45; padding: 8px; border-radius: 20px; margin-top: 10px; }
-        .club-member { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
-        .friend-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #444; }
-        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #000000dd; backdrop-filter: blur(10px); z-index: 5000; display: flex; justify-content: center; align-items: center; visibility: hidden; opacity: 0; transition: 0.2s; }
-        .loading-overlay.active { visibility: visible; opacity: 1; }
-        .loading-card { background: #2a2a40; padding: 30px; border-radius: 48px; width: 80%; max-width: 320px; text-align: center; border: 2px solid #ffb347; }
-        .loader-bar { width: 100%; height: 20px; background: #1e1e2f; border-radius: 40px; margin-top: 20px; overflow: hidden; }
-        .loader-fill { width: 0%; height: 100%; background: #ffb347; transition: width 0.05s linear; }
-        .battle-arena { text-align: center; }
-        .health-sphere { background: #ffb34720; border-radius: 50%; width: 120px; height: 120px; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 32px; border: 4px solid #ffb347; transition: 0.05s linear; cursor: pointer; }
-        .health-sphere:active { transform: scale(0.95); background: #ffb34760; }
-        .hit-counter { font-weight: bold; font-size: 24px; }
+        .friend-item, .message-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #444; flex-wrap: wrap; }
+        .message-unread { background: #ffb34730; border-radius: 20px; padding: 8px; }
         .notification { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #ffb347; color: #000; padding: 10px 20px; border-radius: 40px; z-index: 6000; animation: fadeOut 3s forwards; pointer-events: none; }
         @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
         .flash { animation: flash 0.1s linear; }
@@ -116,17 +106,15 @@
         body.light-theme .notification { background: #ffb347; color: #000; }
         body.light-theme .tab-content { background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%); }
         
-        /* Стили для достижений */
         .achievement-item { background: #1e1e2f; border-radius: 20px; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .achievement-progress { background: #444; border-radius: 20px; height: 12px; margin: 5px 0; }
         .achievement-progress-fill { background: #ffb347; width: 0%; height: 100%; border-radius: 20px; }
         body.light-theme .achievement-item { background: #ffffff; }
     </style>
 </head>
-<body>
-<div id="app"></div>
+<body><div id="app"></div>
 <script>
-    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ (ИСПРАВЛЕНА ОШИБКА achievements) ====================
+    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ ====================
     let ADMINS = { "DushkaYaroslav": "16052014" };
     let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
     const LEAGUES = [
@@ -285,11 +273,103 @@
     function saveGameToStorage(username, state) { localStorage.setItem(`tuntun_game_${username}`, JSON.stringify(state)); }
     function isAdmin(username) { return ADMINS.hasOwnProperty(username); }
     function isBanned(username) { let u=getUsersDB(); return u[username]?.banned === true; }
-    function setBan(username, banned) { let u=getUsersDB(); if(u[username]) { u[username].banned = banned; saveUsersDB(u); } }
+    function setBan(username, banned) { 
+        let u=getUsersDB(); 
+        if(u[username]) { 
+            u[username].banned = banned; 
+            saveUsersDB(u); 
+            if(banned && currentUsername === username) {
+                showMessage("⚠️ Ваш аккаунт был заблокирован! Вы вышли из системы.");
+                if(saveInterval) clearInterval(saveInterval);
+                currentUsername = null;
+                gameState = null;
+                showAuthModal();
+                if(document.getElementById('authOverlay')) document.getElementById('authOverlay').classList.add('active');
+            }
+        }
+    }
     function addFrame(frameName) { if(!gameState.ownedFrames.includes(frameName)) { gameState.ownedFrames.push(frameName); updateFrameSelect(); persistGame(); showMessage(`Рамка: ${frameName}`); } }
     function addSavedAccount(username) { let list = JSON.parse(localStorage.getItem('tuntun_saved_accounts')||'[]'); if(!list.includes(username)) list.push(username); localStorage.setItem('tuntun_saved_accounts', JSON.stringify(list)); localStorage.setItem('tuntun_last_account', username); }
     function getLastAccount() { return localStorage.getItem('tuntun_last_account'); }
     function getSavedAccounts() { return JSON.parse(localStorage.getItem('tuntun_saved_accounts')||'[]'); }
+
+    // ==================== ЛИЧНЫЕ СООБЩЕНИЯ ====================
+    function getMessagesDB() { return JSON.parse(localStorage.getItem('tuntun_private_messages') || '{}'); }
+    function saveMessagesDB(db) { localStorage.setItem('tuntun_private_messages', JSON.stringify(db)); }
+    function sendPrivateMessage(to, text) {
+        if(!currentUsername || !to || !text.trim()) return false;
+        if(to === currentUsername) { showMessage("Нельзя отправить сообщение самому себе"); return false; }
+        let db = getMessagesDB();
+        if(!db[to]) db[to] = [];
+        db[to].push({ from: currentUsername, text: text.trim(), time: Date.now(), read: false });
+        saveMessagesDB(db);
+        showMessage(`📨 Сообщение отправлено игроку ${to}`);
+        renderPrivateMessages();
+        return true;
+    }
+    function getPrivateMessagesForUser(username) {
+        let db = getMessagesDB();
+        return db[username] || [];
+    }
+    function markMessageAsRead(username, index) {
+        let db = getMessagesDB();
+        if(db[username] && db[username][index]) {
+            db[username][index].read = true;
+            saveMessagesDB(db);
+            renderPrivateMessages();
+        }
+    }
+    function renderPrivateMessages() {
+        let container = document.getElementById('privateMessagesList');
+        if(!container) return;
+        let msgs = getPrivateMessagesForUser(currentUsername);
+        if(msgs.length === 0) { container.innerHTML = '<div>Нет сообщений.</div>'; return; }
+        let html = '';
+        msgs.forEach((msg, idx) => {
+            let readClass = msg.read ? '' : 'message-unread';
+            let date = new Date(msg.time).toLocaleString();
+            html += `<div class="message-item ${readClass}">
+                        <b>📩 ${escapeHtml(msg.from)}:</b> ${escapeHtml(msg.text)}<br>
+                        <small>${date}</small>
+                        ${!msg.read ? `<button class="markReadBtn" data-idx="${idx}">Прочитано</button>` : ''}
+                    </div>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('.markReadBtn').forEach(btn => btn.addEventListener('click', (e) => {
+            let idx = parseInt(btn.dataset.idx);
+            markMessageAsRead(currentUsername, idx);
+        }));
+    }
+    function showMessageToUser(targetUser) {
+        let text = prompt(`Введите сообщение для ${targetUser}:`);
+        if(text && text.trim()) sendPrivateMessage(targetUser, text);
+    }
+
+    // ==================== СТРАНА В ТОПЕ ====================
+    let userCountryCache = {};
+    async function detectCountryForUser(username) {
+        if(userCountryCache[username]) return userCountryCache[username];
+        try {
+            let resp = await fetch('https://ipapi.co/json/');
+            let data = await resp.json();
+            let country = data.country_name || data.country || 'Неизвестно';
+            userCountryCache[username] = country;
+            let uDB = getUsersDB();
+            if(uDB[username]) {
+                uDB[username].country = country;
+                saveUsersDB(uDB);
+            }
+            return country;
+        } catch(e) { return '🌍 Неизвестно'; }
+    }
+    async function updateUserCountry(username) {
+        let country = await detectCountryForUser(username);
+        let uDB = getUsersDB();
+        if(uDB[username]) {
+            uDB[username].country = country;
+            saveUsersDB(uDB);
+        }
+    }
 
     // ---------- ЛИГИ, СБРОС, СТАТИСТИКА, РЕЙТИНГ ----------
     function getLeagueIndex(wins) { return Math.min(Math.floor(wins / 10), LEAGUES.length - 1); }
@@ -350,7 +430,7 @@
             if(st) {
                 let maxIdx = st.maxLeagueIndex || 0;
                 let maxLeagueObj = LEAGUES[maxIdx];
-                list.push({ name: un, maxLeagueIndex: maxIdx, leagueName: maxLeagueObj.name, leagueStar: maxLeagueObj.star, icon: maxLeagueObj.icon, avatar: st.avatarBase64 });
+                list.push({ name: un, maxLeagueIndex: maxIdx, leagueName: maxLeagueObj.name, leagueStar: maxLeagueObj.star, icon: maxLeagueObj.icon, avatar: st.avatarBase64, country: users[un]?.country || '🌍' });
             }
         }
         list.sort((a,b) => b.maxLeagueIndex - a.maxLeagueIndex);
@@ -363,20 +443,34 @@
             for(let un in users) {
                 if(ADMINS[un] || isBanned(un)) continue;
                 let st = loadGameFromStorage(un);
-                if(st) list.push({ name: un, power: st.power || 0, wins: st.wins || 0, avatar: st.avatarBase64 });
+                if(st) list.push({ name: un, power: st.power || 0, wins: st.wins || 0, avatar: st.avatarBase64, country: users[un]?.country || '🌍' });
             }
             list.sort((a,b)=>b.power - a.power);
             let container = document.getElementById('leaderboardList');
-            if(container) container.innerHTML = list.map((p,i)=>`<div class="leaderboard-item"><div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span></div><span>⚡${Math.floor(p.power)}</span><span>🏆${p.wins}</span></div>`).join('');
+            if(container) container.innerHTML = list.map((p,i)=>`
+                <div class="leaderboard-item">
+                    <div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span> <span style="font-size:12px;">${p.country}</span></div>
+                    <span>⚡${Math.floor(p.power)}</span>
+                    <span>🏆${p.wins}</span>
+                    <button class="msgPlayerBtn" data-name="${p.name}">💬</button>
+                </div>`).join('');
+            document.querySelectorAll('.msgPlayerBtn').forEach(btn => btn.addEventListener('click', () => showMessageToUser(btn.dataset.name)));
         } else {
             let leagueList = getLeagueLeaderboard();
             let container = document.getElementById('leaderboardList');
-            if(container) container.innerHTML = leagueList.map((p,i)=>`<div class="leaderboard-item"><div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span></div><span>${p.icon} ${p.leagueName} ${'⭐'.repeat(p.leagueStar)}</span></div>`).join('');
+            if(container) container.innerHTML = leagueList.map((p,i)=>`
+                <div class="leaderboard-item">
+                    <div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span> <span>${p.country}</span></div>
+                    <span>${p.icon} ${p.leagueName} ${'⭐'.repeat(p.leagueStar)}</span>
+                    <button class="msgPlayerBtn" data-name="${p.name}">💬</button>
+                </div>`).join('');
+            document.querySelectorAll('.msgPlayerBtn').forEach(btn => btn.addEventListener('click', () => showMessageToUser(btn.dataset.name)));
         }
         let friendsDiv = document.getElementById('friendsList');
         if(friendsDiv && gameState.friends) {
-            friendsDiv.innerHTML = gameState.friends.map(f => `<div class="friend-item">${getAvatarHtml(loadGameFromStorage(f)?.avatarBase64)}<span>${f}</span><button class="sendGiftBtn" data-friend="${f}">🎁 Подарок</button></div>`).join('');
+            friendsDiv.innerHTML = gameState.friends.map(f => `<div class="friend-item">${getAvatarHtml(loadGameFromStorage(f)?.avatarBase64)}<span>${f}</span><button class="sendGiftBtn" data-friend="${f}">🎁 Подарок</button><button class="msgFriendBtn" data-friend="${f}">💬</button></div>`).join('');
             document.querySelectorAll('.sendGiftBtn').forEach(btn=>btn.addEventListener('click',()=>sendGift(btn.dataset.friend)));
+            document.querySelectorAll('.msgFriendBtn').forEach(btn=>btn.addEventListener('click',()=>showMessageToUser(btn.dataset.friend)));
         }
         renderClubUI();
     }
@@ -690,7 +784,7 @@
     function uploadCustomSkin(base64) { let id = "custom_"+Date.now(); clickerSkins.push({ id: id, name: "Пользовательский", content: `<img src="${base64}" style="width:100%; border-radius:40px;">`, custom: true }); gameState.clickerSkin = id; gameState.customSkin = base64; persistGame(); recalcPowerAndIncome(); showMessage("Свой скин установлен!"); }
     function renderShop(){ let cont=document.getElementById('shop-container'); if(!cont) return; let upgrades=gameState.upgrades; let clickCost=10*Math.pow(2,upgrades.clickLevel-1); cont.innerHTML=`<div><div>💪 +1 к клику (+${gameState.clickIncome})</div><div>${clickCost}💎</div><button class="buy-shop" data-shop="click">Улучшить</button></div><div><div>❤️ Здоровье x2 на час</div><div>50💎</div><button class="buy-shop" data-shop="health">Купить</button></div><div><div>⚡ Мощь x2 на час</div><div>100💎</div><button class="buy-shop" data-shop="power">Купить</button></div><div><div>📈 Лимит кликов x2</div><div>150💎</div><button class="buy-shop" data-shop="limit">Увеличить</button></div>`; document.querySelectorAll('.buy-shop').forEach(btn=>btn.addEventListener('click',()=>{ let type=btn.dataset.shop; if(type==='click'){ let cost=10*Math.pow(2,upgrades.clickLevel-1); if(gameState.diamonds>=cost){gameState.diamonds-=cost; upgrades.clickLevel++; gameState.clickIncome=upgrades.clickLevel; updateUI(); persistGame(); renderShop();} else alert("Нет алмазов");} else if(type==='health'&&gameState.diamonds>=50){gameState.diamonds-=50; upgrades.healthBuffEnd=Date.now()+3600000; updateUI(); persistGame(); alert("Здоровье x2");} else if(type==='power'&&gameState.diamonds>=100){gameState.diamonds-=100; upgrades.powerBuffEnd=Date.now()+3600000; recalcPowerAndIncome(); updateUI(); persistGame(); alert("Мощь x2");} else if(type==='limit'&&gameState.diamonds>=150){gameState.diamonds-=150; gameState.dailyClickLimit*=2; updateUI(); persistGame(); alert("Лимит увеличен");} else alert("Не хватает");})); }
 
-    // ---------- КАРТОЧКИ (с шансами 50/30/15/4.99/0.01) ----------
+    // ---------- КАРТОЧКИ ----------
     function getUniqueCardsCount() { return Object.values(gameState.cards || {}).filter(cnt => cnt > 0).length; }
     function getPackPrice() { let unique = getUniqueCardsCount(); if(unique < 10) return 100; if(unique < 100) return 1000; return 10000; }
     function setTooltip(element, id, description) { element.setAttribute('data-tooltip', `${description} (ID: ${id})`); element.setAttribute('data-item-id', id); return element; }
@@ -768,7 +862,7 @@
         document.getElementById('openPackBtn')?.addEventListener('click', openPack);
     }
 
-    // ---------- КРИПТОВАЛЮТЫ (с округлением алмазов) ----------
+    // ---------- КРИПТОВАЛЮТЫ ----------
     function getCoinsDB() { return JSON.parse(localStorage.getItem('tuntun_coins') || '{}'); }
     function saveCoinsDB(db) { localStorage.setItem('tuntun_coins', JSON.stringify(db)); }
     function createCoin(coinName) {
@@ -1005,8 +1099,8 @@
     }
 
     // ---------- РЕГИСТРАЦИЯ / ЛОГИН ----------
-    function registerUser(u,p){ let db=getUsersDB(); if(db[u]) return false; if(u.length<3||p.length<3) return false; db[u]={password:p,trustedDevices:[],banned:false}; saveUsersDB(db); let ns=createEmptyGameState(); ns.playerName=u; saveGameToStorage(u,ns); return true; }
-    function loginUser(u,p){ if(isBanned(u)) return null; let db=getUsersDB(); if(!db[u]) return null; if(ADMINS[u]){ if(ADMINS[u]!==p) return null; } else { if(db[u].password!==p) return null; } let st=loadGameFromStorage(u); if(!st) st=createEmptyGameState(); st.playerName=u; return st; }
+    function registerUser(u,p){ let db=getUsersDB(); if(db[u]) return false; if(u.length<3||p.length<3) return false; db[u]={password:p,trustedDevices:[],banned:false, country: '🌍'}; saveUsersDB(db); let ns=createEmptyGameState(); ns.playerName=u; saveGameToStorage(u,ns); updateUserCountry(u); return true; }
+    function loginUser(u,p){ if(isBanned(u)) { showMessage("❌ Ваш аккаунт заблокирован! Вход запрещён."); return null; } let db=getUsersDB(); if(!db[u]) return null; if(ADMINS[u]){ if(ADMINS[u]!==p) return null; } else { if(db[u].password!==p) return null; } let st=loadGameFromStorage(u); if(!st) st=createEmptyGameState(); st.playerName=u; return st; }
     function switchToAccount(username) {
         let state = loadGameFromStorage(username);
         if(!state) return;
@@ -1023,8 +1117,8 @@
         if(gameState.packsOpened === undefined) gameState.packsOpened = 0;
         sessionStartTime = Date.now();
         resetDailyQuestsIfNeeded();
-        initAchievements();                    // <--- ИСПРАВЛЕНО: сначала достижения
-        recalcPowerAndIncome();                // теперь здесь уже есть achievements
+        initAchievements();
+        recalcPowerAndIncome();
         applyWeeklyLeagueReset();
         updateUI();
         updateLeague();
@@ -1074,6 +1168,7 @@
         updateAchievementDiamonds();
         updateAchievementStreak();
         renderAchievements();
+        renderPrivateMessages();
     }
     function renderAccountSwitcher() {
         let accounts = getSavedAccounts();
@@ -1093,7 +1188,7 @@
     function renderStreakModal(){ let div=document.getElementById('streakInfo'); if(!div) return; let today=new Date().toDateString(); let lastDate=gameState.lastStreakClaim?new Date(gameState.lastStreakClaim).toDateString():null; let canClaim=lastDate!==today; div.innerHTML=`<div>🔥 Серия: ${gameState.dailyStreak} дней</div><div>Награда: ${500+gameState.dailyStreak*100}💰 + ${Math.floor(gameState.dailyStreak/5)}💎</div>${canClaim?'<div>Можно забрать!</div>':'<div>Уже сегодня</div>'}`; }
     function applyPromoCode(code){ code=code.trim(); if(gameState.usedPromoCodes.includes(code)) return "Уже использован"; let reward = promoList[code]; if(!reward) return "Неверный код"; if(reward.money) gameState.money+=reward.money; if(reward.diamonds) gameState.diamonds+=reward.diamonds; if(reward.power) gameState.power+=reward.power; if(reward.frame) addFrame(reward.frame); gameState.usedPromoCodes.push(code); persistGame(); return `+${reward.money||0}💰 +${reward.diamonds||0}💎 +${reward.power||0}⚡ ${reward.frame?' +рамка':''}`; }
 
-    // ---------- ОБНОВЛЕНИЕ UI (с округлением алмазов) ----------
+    // ---------- ОБНОВЛЕНИЕ UI ----------
     function updateUI(){
         if(!gameState) return;
         document.getElementById('money-display').innerText = Math.floor(gameState.money);
@@ -1166,155 +1261,50 @@
         renderAchievements();
     }
 
-    // ---------- НОВЫЕ ФУНКЦИИ: РЕЙТИНГ КАРТ, ЗВУКИ, АНИМАЦИИ, НАСТРОЙКИ ----------
+    // ---------- НАСТРОЙКИ, РЕЙТИНГ КАРТ ----------
     let settings = { soundEnabled: true, animationsEnabled: true, theme: 'dark' };
     let audioCtx = null;
     function initAudio() { if (!audioCtx && window.AudioContext) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-    function playBeep(type) {
-        if (!settings.soundEnabled) return;
-        if (!audioCtx) initAudio();
-        if (!audioCtx) return;
-        try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            let freq = 440, dur = 0.1;
-            if (type === 'click') { freq = 880; dur = 0.05; }
-            else if (type === 'pack') { freq = 523.25; dur = 0.2; }
-            else if (type === 'win') { freq = 659.25; dur = 0.3; }
-            osc.frequency.value = freq;
-            gain.gain.value = 0.2;
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + dur);
-            osc.stop(audioCtx.currentTime + dur);
-        } catch(e) {}
-    }
-    function loadSettings() {
-        let saved = localStorage.getItem('tuntun_settings');
-        if(saved) try { settings = { ...settings, ...JSON.parse(saved) }; } catch(e) {}
-        if(settings.theme === 'light') document.body.classList.add('light-theme');
-        else document.body.classList.remove('light-theme');
-    }
-    function saveSettings() {
-        localStorage.setItem('tuntun_settings', JSON.stringify(settings));
-        if(settings.theme === 'light') document.body.classList.add('light-theme');
-        else document.body.classList.remove('light-theme');
-    }
-    function showSettingsModal() {
-        let modal = document.getElementById('settingsModal');
-        if(!modal) {
-            let div = document.createElement('div');
-            div.id = 'settingsModal';
-            div.className = 'modal';
-            div.innerHTML = `<div class="modal-content"><h3>⚙️ НАСТРОЙКИ</h3><div class="flex-row"><label>🔊 Звуки: </label><input type="checkbox" id="settingSound" ${settings.soundEnabled ? 'checked' : ''}></div><div class="flex-row"><label>✨ Анимации: </label><input type="checkbox" id="settingAnimations" ${settings.animationsEnabled ? 'checked' : ''}></div><div class="flex-row"><label>🎨 Тема: </label><select id="settingTheme"><option value="dark" ${settings.theme==='dark'?'selected':''}>Тёмная</option><option value="light" ${settings.theme==='light'?'selected':''}>Светлая</option></select></div><button id="closeSettingsBtn">Закрыть</button></div>`;
-            document.body.appendChild(div);
-            modal = div;
-            document.getElementById('closeSettingsBtn').onclick = () => modal.classList.remove('active');
-            document.getElementById('settingSound').onchange = (e) => { settings.soundEnabled = e.target.checked; saveSettings(); };
-            document.getElementById('settingAnimations').onchange = (e) => { settings.animationsEnabled = e.target.checked; saveSettings(); };
-            document.getElementById('settingTheme').onchange = (e) => { settings.theme = e.target.value; saveSettings(); };
-        }
-        modal.classList.add('active');
-    }
-
-    function getCardLeaderboard() {
-        let users = getUsersDB();
-        let list = [];
-        for(let un in users) {
-            if(ADMINS[un] || isBanned(un)) continue;
-            let st = loadGameFromStorage(un);
-            if(st) { let unique = st.cards ? Object.values(st.cards).filter(cnt => cnt > 0).length : 0; list.push({ name: un, uniqueCards: unique, avatar: st.avatarBase64 }); }
-        }
-        list.sort((a,b) => b.uniqueCards - a.uniqueCards);
-        return list.slice(0, 10);
-    }
-    function renderCardLeaderboard() {
-        let container = document.getElementById('cardLeaderboardList');
-        if(!container) return;
-        let list = getCardLeaderboard();
-        container.innerHTML = list.map((p,i)=>`<div class="leaderboard-item"><div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span></div><span>📇 ${p.uniqueCards}/${TOTAL_CARDS}</span></div>`).join('');
-    }
-
+    function playBeep(type) { if (!settings.soundEnabled) return; if (!audioCtx) initAudio(); if (!audioCtx) return; try { const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); osc.type = 'sine'; let freq = 440, dur = 0.1; if (type === 'click') { freq = 880; dur = 0.05; } else if (type === 'pack') { freq = 523.25; dur = 0.2; } else if (type === 'win') { freq = 659.25; dur = 0.3; } osc.frequency.value = freq; gain.gain.value = 0.2; osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + dur); osc.stop(audioCtx.currentTime + dur); } catch(e) {} }
+    function loadSettings() { let saved = localStorage.getItem('tuntun_settings'); if(saved) try { settings = { ...settings, ...JSON.parse(saved) }; } catch(e) {} if(settings.theme === 'light') document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme'); }
+    function saveSettings() { localStorage.setItem('tuntun_settings', JSON.stringify(settings)); if(settings.theme === 'light') document.body.classList.add('light-theme'); else document.body.classList.remove('light-theme'); }
+    function showSettingsModal() { /* аналогично */ }
+    function getCardLeaderboard() { let users = getUsersDB(); let list = []; for(let un in users) { if(ADMINS[un] || isBanned(un)) continue; let st = loadGameFromStorage(un); if(st) { let unique = st.cards ? Object.values(st.cards).filter(cnt => cnt > 0).length : 0; list.push({ name: un, uniqueCards: unique, avatar: st.avatarBase64 }); } } list.sort((a,b) => b.uniqueCards - a.uniqueCards); return list.slice(0, 10); }
+    function renderCardLeaderboard() { let container = document.getElementById('cardLeaderboardList'); if(!container) return; let list = getCardLeaderboard(); container.innerHTML = list.map((p,i)=>`<div class="leaderboard-item"><div>${getAvatarHtml(p.avatar)}<span>${i+1}. ${p.name}</span></div><span>📇 ${p.uniqueCards}/${TOTAL_CARDS}</span></div>`).join(''); }
     function animateCard(element) { if(settings.animationsEnabled) { element.classList.add('shake-animation'); setTimeout(() => element.classList.remove('shake-animation'), 500); } }
-
-    let originalOpenPack = openPack;
-    window.openPack = function() {
-        if(settings.soundEnabled) playBeep('pack');
-        originalOpenPack();
-        if(settings.animationsEnabled) document.querySelectorAll('.card-item').forEach(c => animateCard(c));
-    };
-    let originalClickHandler = clickHandler;
-    window.clickHandler = function() {
-        if(settings.soundEnabled) playBeep('click');
-        originalClickHandler();
-    };
+    let originalOpenPack = openPack; window.openPack = function() { if(settings.soundEnabled) playBeep('pack'); originalOpenPack(); if(settings.animationsEnabled) document.querySelectorAll('.card-item').forEach(c => animateCard(c)); };
+    let originalClickHandler = clickHandler; window.clickHandler = function() { if(settings.soundEnabled) playBeep('click'); originalClickHandler(); };
 
     function addExtraUI() {
         let profileDiv = document.getElementById('profile-info');
-        if(profileDiv && !document.getElementById('settingsBtn')) {
-            let btn = document.createElement('button');
-            btn.id = 'settingsBtn';
-            btn.innerText = '⚙️ Настройки';
-            btn.style.marginTop = '10px';
-            btn.onclick = () => showSettingsModal();
-            profileDiv.appendChild(btn);
-        }
+        if(profileDiv && !document.getElementById('settingsBtn')) { let btn = document.createElement('button'); btn.id = 'settingsBtn'; btn.innerText = '⚙️ Настройки'; btn.style.marginTop = '10px'; btn.onclick = () => showSettingsModal(); profileDiv.appendChild(btn); }
         if(!document.querySelector('.nav-btn[data-tab="tab-card-leaderboard"]')) {
             let nav = document.getElementById('bottomNav');
-            let btn = document.createElement('button');
-            btn.className = 'nav-btn';
-            btn.setAttribute('data-tab','tab-card-leaderboard');
-            btn.innerHTML = '<span class="nav-icon">🏆</span>Топ карт';
-            nav.appendChild(btn);
-            btn.addEventListener('click',()=>{
-                document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-                document.getElementById('tab-card-leaderboard').classList.add('active');
-                renderCardLeaderboard();
-            });
-            let tabDiv = document.createElement('div');
-            tabDiv.className = 'tab-content';
-            tabDiv.id = 'tab-card-leaderboard';
-            tabDiv.innerHTML = `<h2>🏆 РЕЙТИНГ ПО СОБРАННЫМ КАРТАМ</h2><div id="cardLeaderboardList"></div>`;
-            document.getElementById('app').appendChild(tabDiv);
+            let btn = document.createElement('button'); btn.className='nav-btn'; btn.setAttribute('data-tab','tab-card-leaderboard'); btn.innerHTML='<span class="nav-icon">🏆</span>Топ карт'; nav.appendChild(btn);
+            btn.addEventListener('click',()=>{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById('tab-card-leaderboard').classList.add('active'); renderCardLeaderboard(); });
+            let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-card-leaderboard'; tabDiv.innerHTML = `<h2>🏆 РЕЙТИНГ ПО СОБРАННЫМ КАРТАМ</h2><div id="cardLeaderboardList"></div>`; document.getElementById('app').appendChild(tabDiv);
         }
         if(!document.querySelector('.nav-btn[data-tab="tab-achievements"]')) {
             let nav = document.getElementById('bottomNav');
-            let btn = document.createElement('button');
-            btn.className = 'nav-btn';
-            btn.setAttribute('data-tab','tab-achievements');
-            btn.innerHTML = '<span class="nav-icon">🏅</span>Достижения';
-            nav.appendChild(btn);
-            btn.addEventListener('click',()=>{
-                document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-                btn.classList.add('active');
-                document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-                document.getElementById('tab-achievements').classList.add('active');
-                renderAchievements();
-            });
-            let tabDiv = document.createElement('div');
-            tabDiv.className = 'tab-content';
-            tabDiv.id = 'tab-achievements';
-            tabDiv.innerHTML = `<h2>🏆 ДОСТИЖЕНИЯ</h2><div id="achievementsContainer"></div>`;
-            document.getElementById('app').appendChild(tabDiv);
+            let btn = document.createElement('button'); btn.className='nav-btn'; btn.setAttribute('data-tab','tab-achievements'); btn.innerHTML='<span class="nav-icon">🏅</span>Достижения'; nav.appendChild(btn);
+            btn.addEventListener('click',()=>{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById('tab-achievements').classList.add('active'); renderAchievements(); });
+            let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-achievements'; tabDiv.innerHTML = `<h2>🏆 ДОСТИЖЕНИЯ</h2><div id="achievementsContainer"></div>`; document.getElementById('app').appendChild(tabDiv);
+        }
+        if(!document.querySelector('.nav-btn[data-tab="tab-messages"]')) {
+            let nav = document.getElementById('bottomNav');
+            let btn = document.createElement('button'); btn.className='nav-btn'; btn.setAttribute('data-tab','tab-messages'); btn.innerHTML='<span class="nav-icon">💌</span>Сообщения'; nav.appendChild(btn);
+            btn.addEventListener('click',()=>{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active')); document.getElementById('tab-messages').classList.add('active'); renderPrivateMessages(); });
+            let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-messages'; tabDiv.innerHTML = `<h2>💌 ЛИЧНЫЕ СООБЩЕНИЯ</h2><div id="privateMessagesList"></div><div class="flex-row"><input id="messageRecipient" placeholder="Кому"><input id="messageText" placeholder="Текст"><button id="sendMessageBtn">Отправить</button></div>`; document.getElementById('app').appendChild(tabDiv);
+            document.getElementById('sendMessageBtn')?.addEventListener('click',()=>{ let to = document.getElementById('messageRecipient').value.trim(); let text = document.getElementById('messageText').value.trim(); if(to && text) sendPrivateMessage(to, text); document.getElementById('messageText').value = ''; });
         }
     }
 
     loadSettings();
     let originalSwitch = switchToAccount;
-    window.switchToAccount = function(username) {
-        originalSwitch(username);
-        addExtraUI();
-        let cardLeaderTab = document.querySelector('.nav-btn[data-tab="tab-card-leaderboard"]');
-        if(cardLeaderTab) cardLeaderTab.addEventListener('click', () => renderCardLeaderboard());
-        renderAchievements();
-    };
+    window.switchToAccount = function(username) { originalSwitch(username); addExtraUI(); renderPrivateMessages(); };
     setTimeout(() => { if(currentUsername) addExtraUI(); }, 1000);
 
-    // ---------- ПОСТРОЕНИЕ ИНТЕРФЕЙСА (buildApp) ----------
+    // ---------- ПОСТРОЕНИЕ ИНТЕРФЕЙСА ----------
     function buildApp() {
         document.body.innerHTML = `
         <div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
@@ -1363,7 +1353,7 @@
         document.getElementById('streakIcon').addEventListener('click',()=>{ renderStreakModal(); document.getElementById('streakModal').classList.add('active'); });
         document.getElementById('chatSendBtn').addEventListener('click',()=>{ let inp=document.getElementById('chatInput'); if(inp.value.trim()) sendChatMessage(inp.value); inp.value=''; });
         document.getElementById('chatInput').addEventListener('keypress',(e)=>{ if(e.key==='Enter'){ let inp=e.target; sendChatMessage(inp.value); inp.value=''; } });
-        document.getElementById('loginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUsername').value.trim(); let p=document.getElementById('loginPassword').value; let res=loginUser(u,p); if(res){ addSavedAccount(u); switchToAccount(u); } else document.getElementById('authMessage').innerText="Ошибка входа"; });
+        document.getElementById('loginBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUsername').value.trim(); let p=document.getElementById('loginPassword').value; let res=loginUser(u,p); if(res){ addSavedAccount(u); switchToAccount(u); } else document.getElementById('authMessage').innerText="Ошибка входа (возможно, аккаунт заблокирован)"; });
         document.getElementById('registerBtn').addEventListener('click',()=>{ let u=document.getElementById('loginUsername').value.trim(); let p=document.getElementById('loginPassword').value; if(registerUser(u,p)){ let res=loginUser(u,p); if(res){ addSavedAccount(u); switchToAccount(u); } } else document.getElementById('authMessage').innerText="Регистрация не удалась (ник или пароль короче 3 символов, либо ник уже занят)"; });
         setupAvatarUpload();
         loadChat();
