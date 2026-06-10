@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тун Тун Тун Заур — Полная версия: кликер, карточки, крипта, рынок, лиги, сообщения, блокировка, страны</title>
+    <title>Тун Тун Тун Заур — Полная версия + 10 новых рамок + рамки админам</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s, background-color 0.3s; }
@@ -114,12 +114,15 @@
         /* Исправление загрузочного экрана */
         .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #000000dd; backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 5000; visibility: visible; opacity: 1; transition: 0.2s; }
         .loading-overlay.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+        
+        /* Анимация для радужной рамки */
+        @keyframes rainbow { 0% { background-position: 0% 0%; } 100% { background-position: 100% 0%; } }
     </style>
 </head>
 <body><div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
 <div id="app"></div>
 <script>
-    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ (ИСПРАВЛЕНА) ====================
+    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ + 10 НОВЫХ РАМОК + АВТО-РАМКИ АДМИНАМ ====================
     let ADMINS = { "DushkaYaroslav": "16052014" };
     let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
     const LEAGUES = [
@@ -131,7 +134,8 @@
         { name: "Мастер", star: 1, frame: "Мастерская рамка", icon: "⭐" },{ name: "Мастер", star: 2, frame: "Мастерская рамка", icon: "⭐" },{ name: "Мастер", star: 3, frame: "Мастерская рамка", icon: "⭐" },
         { name: "Про", star: 1, frame: "Про-рамка", icon: "🌟" },{ name: "Про", star: 2, frame: "Про-рамка", icon: "🌟" },{ name: "Про", star: 3, frame: "Про-рамка", icon: "🌟" }
     ];
-    const ALL_FRAMES = ["Стандартная","Бронзовая рамка","Серебряная рамка","Золотая рамка","Алмазная рамка","🔥Пламенная рамка🔥","❄️Ледяная рамка❄️","🌙Лунная рамка🌙","⚡Грозовая рамка⚡","Платиновая рамка","Мастерская рамка","Про-рамка","🌺Мамин цветок🌺"];
+    // ДОБАВЛЕНЫ НОВЫЕ РАМКИ
+    const ALL_FRAMES = ["Стандартная","Бронзовая рамка","Серебряная рамка","Золотая рамка","Алмазная рамка","🔥Пламенная рамка🔥","❄️Ледяная рамка❄️","🌙Лунная рамка🌙","⚡Грозовая рамка⚡","Платиновая рамка","Мастерская рамка","Про-рамка","🌺Мамин цветок🌺","🌌Космическая рамка🌌","🌈Радужная рамка🌈","⚙️Титановая рамка⚙️","💚Изумрудная рамка💚","🔮Кристальная рамка🔮","🌑Теневая рамка🌑","👑Королевская рамка👑","💚Неоновая рамка💚","🔥Хаос🔥","✨Божественная рамка✨"];
     const SKINS = [
         { id: "frame_fire", name: "Пламенная рамка", type: "frame", priceDiamonds: 200 },
         { id: "frame_ice", name: "Ледяная рамка", type: "frame", priceDiamonds: 200 },
@@ -139,7 +143,18 @@
         { id: "frame_thunder", name: "Грозовая рамка", type: "frame", priceDiamonds: 300 },
         { id: "click_fire", name: "Огненный клик", type: "clickEffect", priceDiamonds: 150, effect: "🔥" },
         { id: "click_star", name: "Звёздный клик", type: "clickEffect", priceDiamonds: 150, effect: "⭐" },
-        { id: "avatar_dragon", name: "Аватар Дракона", type: "avatar", priceDiamonds: 300, avatarUrl: "🐉" }
+        { id: "avatar_dragon", name: "Аватар Дракона", type: "avatar", priceDiamonds: 300, avatarUrl: "🐉" },
+        // НОВЫЕ РАМКИ
+        { id: "frame_cosmic", name: "🌌Космическая рамка🌌", type: "frame", priceDiamonds: 500 },
+        { id: "frame_rainbow", name: "🌈Радужная рамка🌈", type: "frame", priceDiamonds: 500 },
+        { id: "frame_titanium", name: "⚙️Титановая рамка⚙️", type: "frame", priceDiamonds: 500 },
+        { id: "frame_emerald", name: "💚Изумрудная рамка💚", type: "frame", priceDiamonds: 500 },
+        { id: "frame_crystal", name: "🔮Кристальная рамка🔮", type: "frame", priceDiamonds: 500 },
+        { id: "frame_shadow", name: "🌑Теневая рамка🌑", type: "frame", priceDiamonds: 500 },
+        { id: "frame_royal", name: "👑Королевская рамка👑", type: "frame", priceDiamonds: 500 },
+        { id: "frame_neon", name: "💚Неоновая рамка💚", type: "frame", priceDiamonds: 500 },
+        { id: "frame_chaos", name: "🔥Хаос🔥", type: "frame", priceDiamonds: 500 },
+        { id: "frame_divine", name: "✨Божественная рамка✨", type: "frame", priceDiamonds: 500 }
     ];
     let clickerSkins = [
         { id: "default", name: "Стандартный", content: '<div style="font-size:48px;">🐊🔥</div><div style="font-size:22px;">ТУН ТУН САХУР</div>' },
@@ -293,7 +308,14 @@
             }
         }
     }
-    function addFrame(frameName) { if(!gameState.ownedFrames.includes(frameName)) { gameState.ownedFrames.push(frameName); updateFrameSelect(); persistGame(); showMessage(`Рамка: ${frameName}`); } }
+    function addFrame(frameName) { 
+        if(!gameState.ownedFrames.includes(frameName)) { 
+            gameState.ownedFrames.push(frameName); 
+            updateFrameSelect(); 
+            persistGame(); 
+            showMessage(`Рамка: ${frameName}`); 
+        } 
+    }
     function addSavedAccount(username) { let list = JSON.parse(localStorage.getItem('tuntun_saved_accounts')||'[]'); if(!list.includes(username)) list.push(username); localStorage.setItem('tuntun_saved_accounts', JSON.stringify(list)); localStorage.setItem('tuntun_last_account', username); }
     function getLastAccount() { return localStorage.getItem('tuntun_last_account'); }
     function getSavedAccounts() { return JSON.parse(localStorage.getItem('tuntun_saved_accounts')||'[]'); }
@@ -735,7 +757,33 @@
         document.getElementById('frameDisplay').innerHTML = `Рамка: ${gameState.selectedFrame}`; 
         updateAvatarFrame(); 
     }
-    function updateAvatarFrame() { let wrap = document.getElementById('avatarFrameWrapper'); if(!wrap) return; let f = gameState.selectedFrame; if(f.includes("Золотая")) wrap.style.background = "linear-gradient(135deg, #FFD700, #B8860B)"; else if(f.includes("Алмазная")) wrap.style.background = "linear-gradient(135deg, #E0FFFF, #00CED1)"; else if(f.includes("Платиновая")) wrap.style.background = "linear-gradient(135deg, #E5E4E2, #B0C4DE)"; else if(f.includes("Пламенная")) wrap.style.background = "linear-gradient(135deg, #FF4500, #FF0000)"; else if(f.includes("Ледяная")) wrap.style.background = "linear-gradient(135deg, #00BFFF, #1E90FF)"; else if(f.includes("Лунная")) wrap.style.background = "linear-gradient(135deg, #FFDAB9, #FFB6C1)"; else if(f.includes("Грозовая")) wrap.style.background = "linear-gradient(135deg, #9400D3, #4B0082)"; else if(f.includes("Мастерская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00)"; else if(f.includes("Про-рамка")) wrap.style.background = "linear-gradient(135deg, #7CFC00, #228B22)"; else if(f.includes("Мамин цветок")) wrap.style.background = "linear-gradient(135deg, #FF69B4, #FF1493)"; else wrap.style.background = "transparent"; }
+    function updateAvatarFrame() { 
+        let wrap = document.getElementById('avatarFrameWrapper'); 
+        if(!wrap) return; 
+        let f = gameState.selectedFrame; 
+        if(f.includes("Золотая")) wrap.style.background = "linear-gradient(135deg, #FFD700, #B8860B)";
+        else if(f.includes("Алмазная")) wrap.style.background = "linear-gradient(135deg, #E0FFFF, #00CED1)";
+        else if(f.includes("Платиновая")) wrap.style.background = "linear-gradient(135deg, #E5E4E2, #B0C4DE)";
+        else if(f.includes("Пламенная")) wrap.style.background = "linear-gradient(135deg, #FF4500, #FF0000)";
+        else if(f.includes("Ледяная")) wrap.style.background = "linear-gradient(135deg, #00BFFF, #1E90FF)";
+        else if(f.includes("Лунная")) wrap.style.background = "linear-gradient(135deg, #FFDAB9, #FFB6C1)";
+        else if(f.includes("Грозовая")) wrap.style.background = "linear-gradient(135deg, #9400D3, #4B0082)";
+        else if(f.includes("Мастерская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00)";
+        else if(f.includes("Про-рамка")) wrap.style.background = "linear-gradient(135deg, #7CFC00, #228B22)";
+        else if(f.includes("Мамин цветок")) wrap.style.background = "linear-gradient(135deg, #FF69B4, #FF1493)";
+        // НОВЫЕ РАМКИ
+        else if(f.includes("Космическая")) wrap.style.background = "linear-gradient(135deg, #1a0a2a, #2b1b3d), radial-gradient(circle at 20% 40%, #ffffff20 1px, transparent 1px), radial-gradient(circle at 80% 70%, #ffffff20 1px, transparent 1px); background-blend-mode: overlay;";
+        else if(f.includes("Радужная")) wrap.style.background = "linear-gradient(135deg, red, orange, yellow, green, cyan, blue, violet); background-size: 200% 200%; animation: rainbow 2s ease infinite;";
+        else if(f.includes("Титановая")) wrap.style.background = "linear-gradient(135deg, #b0b0b0, #808080, #505050, #808080)";
+        else if(f.includes("Изумрудная")) wrap.style.background = "linear-gradient(135deg, #00ff7f, #008040, #00ff7f)";
+        else if(f.includes("Кристальная")) wrap.style.background = "linear-gradient(135deg, #c0e0ff80, #a0c0ff80), radial-gradient(circle at 30% 30%, #ffffff80 2px, transparent 2px);";
+        else if(f.includes("Теневая")) wrap.style.background = "linear-gradient(135deg, #1a1a2e, #0f0f1a, #1a1a2e)";
+        else if(f.includes("Королевская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00, #FFD700)";
+        else if(f.includes("Неоновая")) wrap.style.background = "linear-gradient(135deg, #00ff00, #00cc00, #00ff00)";
+        else if(f.includes("Хаос")) wrap.style.background = "linear-gradient(135deg, #ff0000, #000000, #ff0000)";
+        else if(f.includes("Божественная")) wrap.style.background = "linear-gradient(135deg, #ffffff, #fffacd, #ffffff)";
+        else wrap.style.background = "transparent";
+    }
     function setupAvatarUpload() { let input = document.getElementById('avatarInput'); let preview = document.getElementById('avatarPreview'); if(!input || !preview) return; document.getElementById('uploadAvatarBtn').onclick = () => input.click(); input.onchange = (e) => { let file = e.target.files[0]; if(!file) return; let reader = new FileReader(); reader.onload = (ev) => { gameState.avatarBase64 = ev.target.result; persistGame(); updateUI(); updateLeaderboardAndFriends(); }; reader.readAsDataURL(file); }; }
     function openSkinShop() { 
         let modal = document.getElementById('skinShopModal'); 
@@ -1133,6 +1181,19 @@
         renderMarket();
         renderAccountSwitcher();
         if(isAdmin(username) && !adminPanelCreated) initAdminPanel();
+        
+        // === НОВОЕ: выдаём все рамки администратору ===
+        if(isAdmin(username)) {
+            for(let frame of ALL_FRAMES) {
+                if(!gameState.ownedFrames.includes(frame)) {
+                    gameState.ownedFrames.push(frame);
+                }
+            }
+            updateFrameSelect(); // обновить выпадающий список
+            persistGame();
+            showMessage("✨ Вам как администратору выданы все рамки! ✨");
+        }
+        
         let adminNavBtn = document.querySelector('.nav-btn[data-tab="tab-admin"]');
         if(isAdmin(username)) {
             if(!adminNavBtn){
