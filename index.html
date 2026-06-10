@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Тун Тун Тун Заур — Полная версия + 10 новых рамок + рамки админам</title>
+    <title>Тун Тун Тун Заур — Топ-100 игроков + все рамки админам</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1e1e2f; color: #fff; overflow: hidden; height: 100vh; transition: background 0.3s, background-color 0.3s; }
@@ -33,7 +33,7 @@
         .rarity-legendary { border-left: 5px solid #f44336; }
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 2000; visibility: hidden; opacity: 0; transition: 0.2s; }
         .modal.active { visibility: visible; opacity: 1; }
-        .modal-content { background: #2a2a40; border-radius: 32px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; padding: 20px; border: 1px solid #ffb347; text-align: center; }
+        .modal-content { background: #2a2a40; border-radius: 32px; width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto; padding: 20px; border: 1px solid #ffb347; text-align: center; }
         .quest-item, .shop-item, .club-item, .admin-item, .streak-item, .skin-item, .record-item, .chat-message { background: #1e1e2f; border-radius: 20px; padding: 12px; margin-bottom: 12px; }
         .quest-progress { background: #444; border-radius: 20px; height: 12px; margin: 8px 0; }
         .quest-progress-fill { background: #ffb347; width: 0%; height: 100%; border-radius: 20px; }
@@ -111,18 +111,23 @@
         .achievement-progress-fill { background: #ffb347; width: 0%; height: 100%; border-radius: 20px; }
         body.light-theme .achievement-item { background: #ffffff; }
         
-        /* Исправление загрузочного экрана */
         .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #000000dd; backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 5000; visibility: visible; opacity: 1; transition: 0.2s; }
         .loading-overlay.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
         
-        /* Анимация для радужной рамки */
         @keyframes rainbow { 0% { background-position: 0% 0%; } 100% { background-position: 100% 0%; } }
+        
+        /* Стили для топ-100 */
+        .top100-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #444; gap: 10px; flex-wrap: wrap; }
+        .top100-rank { font-weight: bold; min-width: 40px; }
+        .top100-name { flex: 2; text-align: left; }
+        .top100-power { min-width: 80px; text-align: right; }
+        .search-input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 40px; border: 1px solid #ffb347; background: #1e1e2f; color: white; }
     </style>
 </head>
 <body><div id="globalLoading" class="loading-overlay"><div class="loading-card"><h3>Загрузка...</h3><div class="loader-bar"><div class="loader-fill"></div></div></div></div>
 <div id="app"></div>
 <script>
-    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ + 10 НОВЫХ РАМОК + АВТО-РАМКИ АДМИНАМ ====================
+    // ==================== ПОЛНАЯ ИГРА + ДОСТИЖЕНИЯ + БЛОКИРОВКА + ЛИЧНЫЕ СООБЩЕНИЯ + СТРАНЫ + 10 НОВЫХ РАМОК + АВТО-РАМКИ АДМИНАМ + ТОП-100 ====================
     let ADMINS = { "DushkaYaroslav": "16052014" };
     let promoList = JSON.parse(localStorage.getItem('tuntun_promos') || '{}');
     const LEAGUES = [
@@ -134,7 +139,6 @@
         { name: "Мастер", star: 1, frame: "Мастерская рамка", icon: "⭐" },{ name: "Мастер", star: 2, frame: "Мастерская рамка", icon: "⭐" },{ name: "Мастер", star: 3, frame: "Мастерская рамка", icon: "⭐" },
         { name: "Про", star: 1, frame: "Про-рамка", icon: "🌟" },{ name: "Про", star: 2, frame: "Про-рамка", icon: "🌟" },{ name: "Про", star: 3, frame: "Про-рамка", icon: "🌟" }
     ];
-    // ДОБАВЛЕНЫ НОВЫЕ РАМКИ
     const ALL_FRAMES = ["Стандартная","Бронзовая рамка","Серебряная рамка","Золотая рамка","Алмазная рамка","🔥Пламенная рамка🔥","❄️Ледяная рамка❄️","🌙Лунная рамка🌙","⚡Грозовая рамка⚡","Платиновая рамка","Мастерская рамка","Про-рамка","🌺Мамин цветок🌺","🌌Космическая рамка🌌","🌈Радужная рамка🌈","⚙️Титановая рамка⚙️","💚Изумрудная рамка💚","🔮Кристальная рамка🔮","🌑Теневая рамка🌑","👑Королевская рамка👑","💚Неоновая рамка💚","🔥Хаос🔥","✨Божественная рамка✨"];
     const SKINS = [
         { id: "frame_fire", name: "Пламенная рамка", type: "frame", priceDiamonds: 200 },
@@ -171,7 +175,7 @@
     let adminPanelCreated = false, momEventActive = false, momQuestCompleted = false;
     let marketLots = [];
 
-    // ==================== ДОСТИЖЕНИЯ ====================
+    // ==================== ДОСТИЖЕНИЯ (сокращённо, но рабочее) ====================
     const ACHIEVEMENTS = [
         { id: "clicks_100", name: "Начинающий кликер", desc: "Сделайте 100 кликов", target: 100, type: "clicks", reward: { money: 5000, diamonds: 5 } },
         { id: "clicks_1000", name: "Кликер-любитель", desc: "Сделайте 1000 кликов", target: 1000, type: "clicks", reward: { money: 20000, diamonds: 20 } },
@@ -268,7 +272,7 @@
     function updateAchievementDiamonds() { checkAchievement('diamonds_100', gameState.diamonds); }
     function updateAchievementStreak() { if(gameState.dailyStreak) checkAchievement('streak_7', gameState.dailyStreak); }
 
-    // ---------- КАРТОЧКИ (200 шт) ----------
+    // ---------- КАРТОЧКИ ----------
     const CARD_RARITIES = ['common','rare','epic','legendary','impossible'];
     const RARITY_NAMES = { common:"Изи", rare:"Обычные", epic:"Эпические", legendary:"Легендарные", impossible:"Невозможные" };
     const RARITY_SHARDS = { common:1000, rare:5000, epic:50000, legendary:500000, impossible:10000000 };
@@ -771,7 +775,6 @@
         else if(f.includes("Мастерская")) wrap.style.background = "linear-gradient(135deg, #FFD700, #FF8C00)";
         else if(f.includes("Про-рамка")) wrap.style.background = "linear-gradient(135deg, #7CFC00, #228B22)";
         else if(f.includes("Мамин цветок")) wrap.style.background = "linear-gradient(135deg, #FF69B4, #FF1493)";
-        // НОВЫЕ РАМКИ
         else if(f.includes("Космическая")) wrap.style.background = "linear-gradient(135deg, #1a0a2a, #2b1b3d), radial-gradient(circle at 20% 40%, #ffffff20 1px, transparent 1px), radial-gradient(circle at 80% 70%, #ffffff20 1px, transparent 1px); background-blend-mode: overlay;";
         else if(f.includes("Радужная")) wrap.style.background = "linear-gradient(135deg, red, orange, yellow, green, cyan, blue, violet); background-size: 200% 200%; animation: rainbow 2s ease infinite;";
         else if(f.includes("Титановая")) wrap.style.background = "linear-gradient(135deg, #b0b0b0, #808080, #505050, #808080)";
@@ -1182,14 +1185,14 @@
         renderAccountSwitcher();
         if(isAdmin(username) && !adminPanelCreated) initAdminPanel();
         
-        // === НОВОЕ: выдаём все рамки администратору ===
+        // === выдаём все рамки администратору ===
         if(isAdmin(username)) {
             for(let frame of ALL_FRAMES) {
                 if(!gameState.ownedFrames.includes(frame)) {
                     gameState.ownedFrames.push(frame);
                 }
             }
-            updateFrameSelect(); // обновить выпадающий список
+            updateFrameSelect();
             persistGame();
             showMessage("✨ Вам как администратору выданы все рамки! ✨");
         }
@@ -1233,7 +1236,6 @@
         updateAchievementIncome();
         updateAchievementDiamonds();
         updateAchievementStreak();
-        // Рендер достижений и сообщений теперь в addExtraUI, который будет вызван после
     }
     function renderAccountSwitcher() {
         let accounts = getSavedAccounts();
@@ -1325,6 +1327,65 @@
         updateAchievementStreak();
     }
 
+    // ==================== ТОП-100 ИГРОКОВ ====================
+    function getTop100Players() {
+        let users = getUsersDB();
+        let list = [];
+        for(let un in users) {
+            if(ADMINS[un] || isBanned(un)) continue;
+            let st = loadGameFromStorage(un);
+            if(st) {
+                list.push({
+                    name: un,
+                    power: st.power || 0,
+                    wins: st.wins || 0,
+                    avatar: st.avatarBase64,
+                    country: users[un]?.country || '🌍'
+                });
+            }
+        }
+        list.sort((a,b) => b.power - a.power);
+        return list.slice(0, 100);
+    }
+
+    function renderTop100Modal() {
+        let modal = document.getElementById('top100Modal');
+        if(!modal) {
+            let div = document.createElement('div');
+            div.id = 'top100Modal';
+            div.className = 'modal';
+            div.innerHTML = `<div class="modal-content"><h2>🌍 ТОП-100 ИГРОКОВ ПО СИЛЕ</h2><input type="text" id="top100Search" class="search-input" placeholder="🔍 Поиск по нику..."><div id="top100List"></div><button id="closeTop100Btn">Закрыть</button></div>`;
+            document.body.appendChild(div);
+            modal = div;
+            document.getElementById('closeTop100Btn').onclick = () => modal.classList.remove('active');
+            document.getElementById('top100Search').addEventListener('input', () => renderTop100List());
+        }
+        renderTop100List();
+        modal.classList.add('active');
+    }
+
+    function renderTop100List() {
+        let list = getTop100Players();
+        let searchTerm = document.getElementById('top100Search')?.value.toLowerCase() || '';
+        let filtered = list.filter(p => p.name.toLowerCase().includes(searchTerm));
+        let container = document.getElementById('top100List');
+        if(!container) return;
+        let html = `<div style="font-weight:bold; display:flex; justify-content:space-between; padding:8px; border-bottom:2px solid #ffb347;">
+                        <span>№</span><span>Игрок</span><span>Сила</span><span>Победы</span><span>Страна</span>
+                    </div>`;
+        filtered.forEach((p, idx) => {
+            html += `<div class="top100-item">
+                        <div class="top100-rank">${idx+1}</div>
+                        <div class="top100-name">${getAvatarHtml(p.avatar)} ${escapeHtml(p.name)}</div>
+                        <div class="top100-power">⚡ ${Math.floor(p.power)}</div>
+                        <div>🏆 ${p.wins}</div>
+                        <div>${p.country}</div>
+                    </div>`;
+        });
+        if(filtered.length === 0) html += '<div>Ничего не найдено</div>';
+        container.innerHTML = html;
+    }
+
     // ---------- НАСТРОЙКИ, РЕЙТИНГ КАРТ ----------
     let settings = { soundEnabled: true, animationsEnabled: true, theme: 'dark' };
     let audioCtx = null;
@@ -1361,7 +1422,16 @@
             let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-messages'; tabDiv.innerHTML = `<h2>💌 ЛИЧНЫЕ СООБЩЕНИЯ</h2><div id="privateMessagesList"></div><div class="flex-row"><input id="messageRecipient" placeholder="Кому"><input id="messageText" placeholder="Текст"><button id="sendMessageBtn">Отправить</button></div>`; document.getElementById('app').appendChild(tabDiv);
             document.getElementById('sendMessageBtn')?.addEventListener('click',()=>{ let to = document.getElementById('messageRecipient').value.trim(); let text = document.getElementById('messageText').value.trim(); if(to && text) sendPrivateMessage(to, text); document.getElementById('messageText').value = ''; });
         }
-        // Принудительный рендер после создания контейнеров
+        // Добавляем кнопку для топ-100 в нижнюю панель
+        if(!document.querySelector('.nav-btn[data-tab="tab-top100"]')) {
+            let nav = document.getElementById('bottomNav');
+            let btn = document.createElement('button');
+            btn.className = 'nav-btn';
+            btn.setAttribute('data-tab', 'tab-top100');
+            btn.innerHTML = '<span class="nav-icon">🌍</span><span>Топ-100</span>';
+            nav.appendChild(btn);
+            btn.addEventListener('click', () => renderTop100Modal());
+        }
         renderAchievements();
         renderPrivateMessages();
     }
@@ -1373,9 +1443,15 @@
         addExtraUI();
         let cardLeaderTab = document.querySelector('.nav-btn[data-tab="tab-card-leaderboard"]');
         if(cardLeaderTab) cardLeaderTab.addEventListener('click', () => renderCardLeaderboard());
-        // Скрываем загрузку, если она ещё видна
         let loader = document.getElementById('globalLoading');
         if(loader) loader.classList.add('hidden');
+        // периодическое обновление топ-100 (каждые 30 секунд)
+        if(window.top100Interval) clearInterval(window.top100Interval);
+        window.top100Interval = setInterval(() => {
+            if(document.getElementById('top100Modal')?.classList.contains('active')) {
+                renderTop100List();
+            }
+        }, 30000);
     };
     setTimeout(() => { if(currentUsername) addExtraUI(); }, 1000);
 
@@ -1439,7 +1515,6 @@
         setInterval(()=>{ if(gameState && currentUsername){ let delta=Math.floor((Date.now()-sessionStartTime)/1000); gameState.totalPlayTime+=delta; sessionStartTime=Date.now(); persistGame(); updateUI(); } }, 60000);
         setInterval(()=>{ if(gameState && currentUsername){ let inc=gameState.incomePerMinute/60; if(inc>0){ gameState.money+=inc; updateUI(); persistGame(); } } }, 1000);
         if(isMomBirthday() && !momEventActive) setTimeout(()=>activateMomEvent(),500);
-        // Принудительно скрываем загрузку через 2 секунды на случай ошибок
         setTimeout(()=>{ let loader = document.getElementById('globalLoading'); if(loader) loader.classList.add('hidden'); }, 2000);
     }
     buildApp();
