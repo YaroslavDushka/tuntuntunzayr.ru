@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -116,7 +117,6 @@
         
         @keyframes rainbow { 0% { background-position: 0% 0%; } 100% { background-position: 100% 0%; } }
         
-        /* Стили для топ-100 */
         .top100-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #444; gap: 10px; flex-wrap: wrap; }
         .top100-rank { font-weight: bold; min-width: 40px; }
         .top100-name { flex: 2; text-align: left; }
@@ -1327,7 +1327,7 @@
         updateAchievementStreak();
     }
 
-    // ==================== ТОП-100 ИГРОКОВ ====================
+    // ==================== ТОП-100 ИГРОКОВ (ВСЕ ЗАРЕГИСТРИРОВАННЫЕ) ====================
     function getTop100Players() {
         let users = getUsersDB();
         let list = [];
@@ -1354,7 +1354,7 @@
             let div = document.createElement('div');
             div.id = 'top100Modal';
             div.className = 'modal';
-            div.innerHTML = `<div class="modal-content"><h2>🌍 ТОП-100 ИГРОКОВ ПО СИЛЕ</h2><input type="text" id="top100Search" class="search-input" placeholder="🔍 Поиск по нику..."><div id="top100List"></div><button id="closeTop100Btn">Закрыть</button></div>`;
+            div.innerHTML = `<div class="modal-content"><h2>🌍 ТОП-100 ИГРОКОВ ПО СИЛЕ</h2><div id="top100TotalInfo" style="margin-bottom:10px;"></div><input type="text" id="top100Search" class="search-input" placeholder="🔍 Поиск по нику..."><div id="top100List"></div><button id="closeTop100Btn">Закрыть</button></div>`;
             document.body.appendChild(div);
             modal = div;
             document.getElementById('closeTop100Btn').onclick = () => modal.classList.remove('active');
@@ -1369,7 +1369,18 @@
         let searchTerm = document.getElementById('top100Search')?.value.toLowerCase() || '';
         let filtered = list.filter(p => p.name.toLowerCase().includes(searchTerm));
         let container = document.getElementById('top100List');
+        let totalInfoDiv = document.getElementById('top100TotalInfo');
         if(!container) return;
+        
+        // Подсчёт общего числа активных игроков (не админы и не забаненные)
+        let users = getUsersDB();
+        let totalPlayers = 0;
+        for(let un in users) {
+            if(ADMINS[un] || isBanned(un)) continue;
+            totalPlayers++;
+        }
+        totalInfoDiv.innerHTML = `<div style="background:#2a2a45; border-radius:16px; padding:8px; margin-bottom:5px;">📊 Всего зарегистрированных игроков: ${totalPlayers}<br>🏆 Топ-100 сильнейших:</div>`;
+        
         let html = `<div style="font-weight:bold; display:flex; justify-content:space-between; padding:8px; border-bottom:2px solid #ffb347;">
                         <span>№</span><span>Игрок</span><span>Сила</span><span>Победы</span><span>Страна</span>
                     </div>`;
@@ -1422,7 +1433,7 @@
             let tabDiv = document.createElement('div'); tabDiv.className = 'tab-content'; tabDiv.id = 'tab-messages'; tabDiv.innerHTML = `<h2>💌 ЛИЧНЫЕ СООБЩЕНИЯ</h2><div id="privateMessagesList"></div><div class="flex-row"><input id="messageRecipient" placeholder="Кому"><input id="messageText" placeholder="Текст"><button id="sendMessageBtn">Отправить</button></div>`; document.getElementById('app').appendChild(tabDiv);
             document.getElementById('sendMessageBtn')?.addEventListener('click',()=>{ let to = document.getElementById('messageRecipient').value.trim(); let text = document.getElementById('messageText').value.trim(); if(to && text) sendPrivateMessage(to, text); document.getElementById('messageText').value = ''; });
         }
-        // Добавляем кнопку для топ-100 в нижнюю панель
+        // Кнопка для топ-100 (все зарегистрированные игроки)
         if(!document.querySelector('.nav-btn[data-tab="tab-top100"]')) {
             let nav = document.getElementById('bottomNav');
             let btn = document.createElement('button');
